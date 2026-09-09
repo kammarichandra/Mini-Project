@@ -1,17 +1,24 @@
-function Header({ onLogout }) {
+function Header({ onMenuClick }) {
   return (
-    <header className="header">
-      <div className="header-brand">
-        <span className="logo-icon">🏢</span>
-        <h2>Employee Management System</h2>
+    <header className="app-header">
+      <div className="d-flex align-items-center">
+        <button
+          className="btn menu-button"
+          onClick={onMenuClick}
+          aria-label="Toggle sidebar"
+        >
+          ☰
+        </button>
+
+        <h4 className="mb-0 ms-2">React Dashboard</h4>
       </div>
-      <div className="header-user">
-        <span className="user-greeting">👤 Admin</span>
-        {onLogout && (
-          <button className="logout-btn" onClick={onLogout}>
-            Logout
-          </button>
-        )}
+
+      <div className="user-section">
+        <span className="me-2">Welcome, User</span>
+
+        <div className="user-avatar">
+          U
+        </div>
       </div>
     </header>
   );
