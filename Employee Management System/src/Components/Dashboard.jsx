@@ -1,6 +1,44 @@
+import { useEffect, useState } from "react";
 import StatCard from "./StatCard";
 
+const initialActivities = [
+  { id: 1, text: "Sarah Jenkins requested annual leave for next Monday", time: "10 mins ago", type: "leave" },
+  { id: 2, text: "Alex Rivera joined as Senior Frontend Developer", time: "1 hour ago", type: "hire" },
+  { id: 3, text: "Q3 Performance Reviews submitted for Design Team", time: "3 hours ago", type: "review" },
+  { id: 4, text: "Michael Scott updated personal contact details", time: "Yesterday", type: "profile" },
+];
+
+const liveActivityTemplates = [
+  "Priya Shah checked in for the day",
+  "Jordan Lee updated their emergency contact",
+  "The Engineering team completed its daily stand-up",
+  "Olivia Martin submitted a remote-work request",
+];
+
 function Dashboard() {
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [recentActivities, setRecentActivities] = useState(initialActivities);
+
+  useEffect(() => {
+    const clock = setInterval(() => setCurrentTime(new Date()), 1000);
+    const activityFeed = setInterval(() => {
+      setRecentActivities((activities) => [
+        {
+          id: Date.now(),
+          text: liveActivityTemplates[Math.floor(Math.random() * liveActivityTemplates.length)],
+          time: "Just now",
+          type: "live",
+        },
+        ...activities,
+      ].slice(0, 5));
+    }, 10000);
+
+    return () => {
+      clearInterval(clock);
+      clearInterval(activityFeed);
+    };
+  }, []);
+
   // Statistics data showcasing props passed to StatCard
   const stats = [
     {
@@ -37,13 +75,6 @@ function Dashboard() {
     },
   ];
 
-  const recentActivities = [
-    { id: 1, text: "Sarah Jenkins requested annual leave for next Monday", time: "10 mins ago", type: "leave" },
-    { id: 2, text: "Alex Rivera joined as Senior Frontend Developer", time: "1 hour ago", type: "hire" },
-    { id: 3, text: "Q3 Performance Reviews submitted for Design Team", time: "3 hours ago", type: "review" },
-    { id: 4, text: "Michael Scott updated personal contact details", time: "Yesterday", type: "profile" },
-  ];
-
   const departmentOverview = [
     { name: "Engineering", count: 68, percentage: 44, color: "#2563eb" },
     { name: "Sales & Marketing", count: 34, percentage: 22, color: "#16a34a" },
@@ -61,6 +92,10 @@ function Dashboard() {
           <p className="subtitle">Welcome back! Here's what is happening with your team today.</p>
         </div>
         <div className="header-actions">
+          <span className="live-clock" aria-live="polite">
+            <span className="live-indicator" />
+            Live {currentTime.toLocaleTimeString()}
+          </span>
           <button className="primary-btn">+ Add Employee</button>
         </div>
       </div>
