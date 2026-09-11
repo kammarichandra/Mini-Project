@@ -1,61 +1,23 @@
-function Sidebar({ isOpen, onMenuClick }) {
+import { NavLink } from "react-router-dom";
+
+const Sidebar = () => {
   return (
-    <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div
-          className="sidebar-overlay"
-          onClick={onMenuClick}
-        ></div>
-      )}
+    <aside className="sidebar">
+      <nav>
+        <NavLink to="/dashboard" className={({ isActive }) => (isActive ? "active" : "") }>
+          <span><i className="fa-solid fa-gauge-high"></i></span> Dashboard
+        </NavLink>
 
-      <aside className={`sidebar ${isOpen ? "sidebar-open" : ""}`}>
-        <div className="sidebar-header">
-          <h5>Menu</h5>
-        </div>
+        <NavLink to="/users" className={({ isActive }) => (isActive ? "active" : "") }>
+          <span><i className="fa-regular fa-user"></i></span> Users
+        </NavLink>
 
-        <nav>
-          <ul className="sidebar-menu">
-            <li>
-              <a href="#" className="active">
-                🏠 Dashboard
-              </a>
-            </li>
-
-            <li>
-              <a href="#">
-                👤 Users
-              </a>
-            </li>
-
-            <li>
-              <a href="#">
-                📦 Products
-              </a>
-            </li>
-
-            <li>
-              <a href="#">
-                🛒 Orders
-              </a>
-            </li>
-
-            <li>
-              <a href="#">
-                📊 Reports
-              </a>
-            </li>
-
-            <li>
-              <a href="#">
-                ⚙️ Settings
-              </a>
-            </li>
-          </ul>
-        </nav>
-      </aside>
-    </>
+        <NavLink to="/settings" className={({ isActive }) => (isActive ? "active" : "") }>
+          <span><i className="fa-solid fa-gear"></i></span> Settings
+        </NavLink>
+      </nav>
+    </aside>
   );
-}
+};
 
 export default Sidebar;

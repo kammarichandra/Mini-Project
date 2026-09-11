@@ -1,35 +1,30 @@
-import { useState } from "react";
-import Header from "./Components/Header";
-import Sidebar from "./Components/Sidebar";
-import Dashboard from "./Components/Dashboard";
-import "./App.css";
 
-function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+import { useLocation } from "react-router-dom";
+import AppRoutes from './Routers/AppRoutes';
+import Header from './Components/Header';
+import Sidebar from './Components/Sidebar';
 
-  const handleMenuClick = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+const App = () => {
+  const location = useLocation();
+  const shouldShowLayout = location.pathname !== "/login" && location.pathname !== "/";
+
+  if (!shouldShowLayout) {
+    return <AppRoutes />;
+  }
 
   return (
     <div className="app-container">
-      {/* Header */}
-      <Header onMenuClick={handleMenuClick} />
+      <Header />
 
       <div className="main-layout">
-        {/* Sidebar */}
-        <Sidebar
-          isOpen={sidebarOpen}
-          onMenuClick={handleMenuClick}
-        />
+        <Sidebar />
 
-        {/* Main Content */}
         <main className="content">
-          <Dashboard />
+          <AppRoutes />
         </main>
       </div>
     </div>
   );
-}
+};
 
 export default App;

@@ -1,9 +1,6 @@
-html,
-body,
-#root {
-  min-height: 100%;
-}
-
 body {
   margin: 0;
+  background: #F8FAFC;
+  color: #172554;
+  font-family: Arial, sans-serif;
 }
