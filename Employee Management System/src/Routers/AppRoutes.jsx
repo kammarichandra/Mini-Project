@@ -1,9 +1,14 @@
 ﻿import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "../Pages/Login";
 import DashboardPage from "../Pages/DashboardPage";
-import Users from "../Pages/Users";
+import Users from "../Pages/Employees";
 import Settings from "../Pages/Settings";
 import ProtectedRoute from "../Components/Protectedroute";
+import Performance from "../Pages/Performance";
+import Reports from "../Pages/Reports";
+import Leave_Managment from "../Pages/Leave_Managment";
+import Attendance from "../Pages/Attendance";
+import Payroll from "../Pages/Payroll";
 
 const AppRoutes = () => {
   return (
@@ -21,7 +26,7 @@ const AppRoutes = () => {
       />
 
       <Route
-        path="/users"
+        path="/Employees"
         element={
           <ProtectedRoute>
             <Users />
@@ -34,6 +39,53 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+
+
+
+      <Route
+        path="/payroll"
+        element={
+          <ProtectedRoute>
+            <Payroll />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/performance"
+        element={
+          <ProtectedRoute>
+            <Performance />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/Reports"
+        element={
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/Leave_Management"
+        element={
+          <ProtectedRoute>
+            <Leave_Managment />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/Attendance"
+        element={
+          <ProtectedRoute>
+            <Attendance />
           </ProtectedRoute>
         }
       />
