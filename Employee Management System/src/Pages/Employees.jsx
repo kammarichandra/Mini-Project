@@ -1,4 +1,5 @@
 import { useState } from "react";
+import StatCard from "../Components/StatCard";
 
 
 const employeeData = [
@@ -88,6 +89,11 @@ function Employees() {
     (employee) => employee.status === "On Leave"
   ).length;
 
+  const hasActiveFilters =
+    search.trim() !== "" ||
+    department !== "All Departments" ||
+    status !== "All Status";
+
   const allVisibleSelected =
     filteredEmployees.length > 0 &&
     filteredEmployees.every((employee) => selectedIds.includes(employee.id));
@@ -144,6 +150,12 @@ function Employees() {
     setSelectedIds((current) => current.filter((selectedId) => selectedId !== id));
   };
 
+  const clearFilters = () => {
+    setSearch("");
+    setDepartment("All Departments");
+    setStatus("All Status");
+  };
+
   return (
     <div className="employee-page">
 
@@ -154,65 +166,38 @@ function Employees() {
         
         {/* ================= STAT CARDS ================= */}
         <div className="stats-grid">
-
-          <div className="stat-card blue-card">
-            <div>
-              <p>Total Employees</p>
-              <h2>{totalEmployees}</h2>
-
-              <div className="growth positive">
-                ▲ +8.2%
-                <span>vs last month</span>
-              </div>
-            </div>
-
-            <div className="stat-icon blue-icon">👥</div>
-          </div>
-
-
-          <div className="stat-card green-card">
-            <div>
-              <p>Active Employees</p>
-              <h2>{activeEmployees}</h2>
-
-              <div className="growth positive">
-                ▲ +2.1%
-                <span>vs last month</span>
-              </div>
-            </div>
-
-            <div className="stat-icon green-icon">👤</div>
-          </div>
-
-
-          <div className="stat-card orange-card">
-            <div>
-              <p>On Leave</p>
-              <h2>{employeesOnLeave}</h2>
-
-              <div className="growth negative">
-                ▼ -3.4%
-                <span>vs last month</span>
-              </div>
-            </div>
-
-            <div className="stat-icon orange-icon">✈</div>
-          </div>
-
-
-          <div className="stat-card purple-card">
-            <div>
-              <p>New Joiners (This Month)</p>
-              <h2>0</h2>
-
-              <div className="growth neutral">
-                ◆ 0%
-                <span>vs last month</span>
-              </div>
-            </div>
-
-            <div className="stat-icon purple-icon">👤+</div>
-          </div>
+          <StatCard
+            title="Total Employees"
+            value={totalEmployees}
+            icon="👥"
+            change="+8.2%"
+            changeType="positive"
+            color="#2563eb"
+          />
+          <StatCard
+            title="Active Employees"
+            value={activeEmployees}
+            icon="👤"
+            change="+2.1%"
+            changeType="positive"
+            color="#16a34a"
+          />
+          <StatCard
+            title="On Leave"
+            value={employeesOnLeave}
+            icon="✈"
+            change="-3.4%"
+            changeType="negative"
+            color="#f59e0b"
+          />
+          <StatCard
+            title="New Joiners (This Month)"
+            value="0"
+            icon="👤+"
+            change="0%"
+            changeType="positive"
+            color="#8b5cf6"
+          />
 
         </div>
 
@@ -255,10 +240,20 @@ function Employees() {
           </select>
 
 
-          <button className="add-employee-btn" onClick={addEmployee}>
+          {/* <button className="add-employee-btn" onClick={addEmployee}>
             <span>＋</span>
             Add Employee
-          </button>
+          </button> */}
+
+          {hasActiveFilters && (
+            <button
+              className="clear-filters-btn"
+              type="button"
+              onClick={clearFilters}
+            >
+              Clear filters
+            </button>
+          )}
 
         </div>
 
@@ -293,7 +288,14 @@ function Employees() {
 
             <tbody>
 
-              {filteredEmployees.map((employee, index) => (
+              {filteredEmployees.length === 0 ? (
+                <tr>
+                  <td className="empty-state" colSpan="9">
+                    No employees match the selected filters.
+                  </td>
+                </tr>
+              ) : (
+                filteredEmployees.map((employee, index) => (
 
                 <tr key={employee.id}>
 
@@ -370,7 +372,8 @@ function Employees() {
 
                 </tr>
 
-              ))}
+                ))
+              )}
 
             </tbody>
 

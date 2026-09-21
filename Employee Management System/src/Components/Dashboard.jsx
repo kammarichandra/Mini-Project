@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import StatCard from "./StatCard";
-import DataTable from "../Components/Common/DataTable";
 import Modal from "../Components/Common/Modal";
 
 const initialEmployees = [
@@ -140,60 +139,6 @@ function Dashboard() {
     },
   ];
 
-  // Department data
-  const departmentOverview = [
-    {
-      name: "Engineering",
-      count: 68,
-      percentage: 44,
-      color: "#2563eb",
-    },
-    {
-      name: "Sales & Marketing",
-      count: 34,
-      percentage: 22,
-      color: "#16a34a",
-    },
-    {
-      name: "Human Resources",
-      count: 18,
-      percentage: 12,
-      color: "#f59e0b",
-    },
-    {
-      name: "Design & UX",
-      count: 16,
-      percentage: 10,
-      color: "#8b5cf6",
-    },
-    {
-      name: "Finance & Operations",
-      count: 18,
-      percentage: 12,
-      color: "#ec4899",
-    },
-  ];
-
-  // DataTable columns
-  const columns = [
-    {
-      key: "id",
-      label: "Employee ID",
-    },
-    {
-      key: "name",
-      label: "Name",
-    },
-    {
-      key: "department",
-      label: "Department",
-    },
-    {
-      key: "status",
-      label: "Status",
-    },
-  ];
-
   // Add employee
   const handleSave = () => {
     if (!employeeName.trim()) {
@@ -203,7 +148,6 @@ function Dashboard() {
 
     const newEmployee = {
       id: 100 + employees.length + 1,
-      name: employeeName,
       department: department,
       status: "Active",
     };
@@ -235,32 +179,20 @@ function Dashboard() {
       <div className="dashboard-header">
 
         <div>
-          <h2>Dashboard Overview</h2>
-
-          <p className="subtitle">
-            Welcome back! Here's what is happening with your
-            team today.
-          </p>
+          <h2>Dashboard</h2>
+          <p className="subtitle">Welcome back, Chandra!</p>
         </div>
 
         <div className="header-actions">
 
-          <span
-            className="live-clock"
-            aria-live="polite"
-          >
-            <span className="live-indicator"></span>
-
-            Live{" "}
-            {currentTime.toLocaleTimeString()}
+          <span className="dashboard-date">
+            {currentTime.toLocaleDateString("en-GB", {
+              weekday: "short",
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
           </span>
-
-          <button
-            className="primary-btn"
-            onClick={() => setShowModal(true)}
-          >
-            + Add Employee
-          </button>
 
         </div>
       </div>
@@ -284,106 +216,45 @@ function Dashboard() {
       </div>
 
 
-      {/* ================= DEPARTMENT + ACTIVITY ================= */}
+      {/* ================= ACTIVITY + ATTENDANCE ================= */}
       <div className="dashboard-sections-grid">
 
-        {/* Department Breakdown */}
-        <div className="card department-card">
-
-          <div className="card-header">
-
-            <h3>Department Breakdown</h3>
-
-            <span className="badge">
-              5 Departments
-            </span>
-
-          </div>
-
-          <div className="department-list">
-
-            {departmentOverview.map(
-              (dept, index) => (
-
-                <div
-                  key={index}
-                  className="department-item"
-                >
-
-                  <div className="department-info">
-
-                    <span className="dept-name">
-                      {dept.name}
-                    </span>
-
-                    <span className="dept-count">
-                      {dept.count} members (
-                      {dept.percentage}%)
-                    </span>
-
-                  </div>
-
-                  <div className="progress-bar-bg">
-
-                    <div
-                      className="progress-bar-fill"
-                      style={{
-                        width: `${dept.percentage}%`,
-                        backgroundColor: dept.color,
-                      }}
-                    />
-
-                  </div>
-
-                </div>
-              )
-            )}
-
-          </div>
-
-        </div>
-
-
-        {/* Recent Activities */}
         <div className="card activity-card">
 
           <div className="card-header">
 
             <h3>Recent Activities</h3>
 
-            <span className="badge badge-light">
-              Real-time
-            </span>
-
           </div>
 
           <div className="activity-list">
-
-            {recentActivities.map((activity) => (
-
-              <div
-                key={activity.id}
-                className="activity-item"
-              >
-
+            {recentActivities.slice(0, 4).map((activity) => (
+              <div key={activity.id} className="activity-item">
                 <div className="activity-dot"></div>
-
                 <div className="activity-content">
-
-                  <p className="activity-text">
-                    {activity.text}
-                  </p>
-
-                  <span className="activity-time">
-                    {activity.time}
-                  </span>
-
+                  <p className="activity-text">{activity.text}</p>
+                  <span className="activity-time">{activity.time}</span>
                 </div>
-
               </div>
-
             ))}
+          </div>
+        </div>
 
+        <div className="card attendance-card">
+
+          <div className="card-header">
+
+            <h3>Employee Attendance</h3>
+
+          </div>
+
+          <div className="attendance-content">
+            <div className="attendance-ring"><strong>87%</strong><span>Present</span></div>
+            <div className="attendance-legend">
+              <span><i className="present-dot"></i>Present <b>112</b></span>
+              <span><i className="leave-dot"></i>On Leave <b>8</b></span>
+              <span><i className="absent-dot"></i>Absent <b>8</b></span>
+            </div>
           </div>
 
         </div>
@@ -391,32 +262,24 @@ function Dashboard() {
       </div>
 
 
-      {/* ================= EMPLOYEE TABLE ================= */}
-      <div className="card employee-table-card">
+      <div className="card monthly-card">
 
         <div className="card-header">
 
           <div>
-            <h3>Employees</h3>
-
-            <p className="subtitle">
-              Manage your team members
-            </p>
+            <h3>Monthly Overview</h3>
           </div>
-
-          <button
-            className="primary-btn"
-            onClick={() => setShowModal(true)}
-          >
-            + Add Employee
-          </button>
 
         </div>
 
-        <DataTable
-          columns={columns}
-          data={employees}
-        />
+        <div className="monthly-chart" aria-label="Monthly employee overview">
+          {[32, 48, 40, 70, 56, 80, 62, 92, 74, 90, 82, 94].map((height, index) => (
+            <div className="chart-column" key={index}>
+              <div className={`chart-bar chart-color-${index % 3}`} style={{ height: `${height}%` }}></div>
+              <span>{["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][index]}</span>
+            </div>
+          ))}
+        </div>
 
       </div>
 

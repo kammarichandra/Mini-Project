@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo1.png";
 
 function Header() {
   const navigate = useNavigate();
@@ -11,23 +10,23 @@ function Header() {
   };
 
   return (
-    <header className="app-header d-flex justify-content-between align-items-center px-4">
-      <div className="d-flex align-items-center">
-        <img src={logo} className="header-logo" alt="TeamSync logo" />
+    <header className="app-header">
+      <label className="global-search">
+        <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" placeholder="Search..." aria-label="Search" />
+      </label>
 
-        <div className="brand-info ms-2">
-          <h4 className="mb-0">TeamSync</h4>
-          <small>emphasizes team management</small>
+      <div className="header-user">
+        <button className="icon-button" type="button" aria-label="Notifications">
+          <i className="fa-regular fa-bell" aria-hidden="true"></i>
+        </button>
+        <div className="header-avatar">CS</div>
+        <div className="header-user-copy">
+          <strong>Chandra</strong>
+          <small>Employee</small>
         </div>
-      </div>
-
-      <div className="user-section d-flex align-items-center gap-3">
-        <span>Welcome, User</span>
-
-        <div className="user-avatar">U</div>
-
-        <button type="button" className="btn btn-outline-light btn-sm" onClick={handleLogout}>
-          Logout
+        <button className="user-menu-button" type="button" onClick={handleLogout} aria-label="Log out">
+          <i className="fa-solid fa-chevron-down" aria-hidden="true"></i>
         </button>
       </div>
     </header>

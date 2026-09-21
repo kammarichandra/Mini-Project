@@ -9,11 +9,12 @@ import Reports from "../Pages/Reports";
 import Leave_Managment from "../Pages/Leave_Managment";
 import Attendance from "../Pages/Attendance";
 import Payroll from "../Pages/Payroll";
+import Home from "../Pages/Home";
 
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
 
       <Route

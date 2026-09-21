@@ -1,9 +1,16 @@
 import { NavLink } from "react-router-dom";
+import logo from "../assets/logo1.png";
 
 const Sidebar = () => {
   return (
     <aside className="sidebar">
-      <nav>
+      <div className="sidebar-brand">
+        <img className="sidebar-brand-logo" src={logo} alt="TeamSync logo" />
+        <span>TeamSync</span>
+       
+      </div>
+
+      <nav className="sidebar-nav" aria-label="Main navigation">
         <NavLink to="/dashboard" className={({ isActive }) => (isActive ? "active" : "") }>
           <span><i className="fa-solid fa-gauge-high"></i></span> Dashboard
         </NavLink>
@@ -17,25 +24,29 @@ const Sidebar = () => {
         </NavLink>
 
         <NavLink to="/Leave_Management" className={({ isActive }) => (isActive ? "active" : "") }>
-          <span><i class="fa-solid fa-plane-circle-xmark"></i></span> Leave Management
+          <span><i className="fa-solid fa-plane-circle-xmark"></i></span> Leave Management
         </NavLink>
 
         <NavLink to="/Attendance" className={({ isActive }) => (isActive ? "active" : "") }>
-          <span><i class="fa-regular fa-calendar"></i></span> Attendance
+          <span><i className="fa-regular fa-calendar"></i></span> Attendance
         </NavLink>
 
         <NavLink to="/performance" className={({ isActive }) => (isActive ? "active" : "") }>
-          <span><i class="fa-solid fa-arrow-trend-up"></i></span> Performance
+          <span><i className="fa-solid fa-arrow-trend-up"></i></span> Performance
         </NavLink>
 
         <NavLink to="/Payroll" className={({ isActive }) => (isActive ? "active" : "") }>
-          <span><i class="fa-regular fa-credit-card"></i></span> Payroll
+          <span><i className="fa-regular fa-credit-card"></i></span> Payroll
         </NavLink>
 
         <NavLink to="/Reports" className={({ isActive }) => (isActive ? "active" : "") }>
-          <span><i class="fa-regular fa-file"></i></span> Reports
+          <span><i className="fa-regular fa-file"></i></span> Reports
         </NavLink>
       </nav>
+
+      <NavLink to="/login" className="sidebar-logout" onClick={() => localStorage.removeItem("isLoggedIn")}>
+        <span><i className="fa-solid fa-arrow-right-from-bracket"></i></span> Logout
+      </NavLink>
     </aside>
   );
 };
