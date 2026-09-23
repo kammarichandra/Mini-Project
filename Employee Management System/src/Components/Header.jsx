@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
-function Header() {
+function Header({ onMenuToggle }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -11,6 +11,15 @@ function Header() {
 
   return (
     <header className="app-header">
+      <button
+        className="menu-toggle"
+        type="button"
+        onClick={onMenuToggle}
+        aria-label="Toggle navigation menu"
+        aria-controls="main-navigation"
+      >
+        <i className="fa-solid fa-bars" aria-hidden="true"></i>
+      </button>
       <label className="global-search">
         <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
         <input type="search" placeholder="Search..." aria-label="Search" />

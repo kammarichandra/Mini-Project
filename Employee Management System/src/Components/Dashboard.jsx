@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
-import StatCard from "./StatCard";
 import Modal from "../Components/Common/Modal";
+import PageSurface from "./PageSurface";
 
 const initialEmployees = [
   {
@@ -59,8 +59,6 @@ const liveActivityTemplates = [
 ];
 
 function Dashboard() {
-  const [currentTime, setCurrentTime] = useState(new Date());
-
   const [recentActivities, setRecentActivities] =
     useState(initialActivities);
 
@@ -74,10 +72,6 @@ function Dashboard() {
 
   // Live clock and activity feed
   useEffect(() => {
-    const clock = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
     const activityFeed = setInterval(() => {
       setRecentActivities((activities) => [
         {
@@ -96,48 +90,9 @@ function Dashboard() {
     }, 10000);
 
     return () => {
-      clearInterval(clock);
       clearInterval(activityFeed);
     };
   }, []);
-
-  // Statistics
-  const stats = [
-    {
-      title: "Total Employees",
-      value: employees.length,
-      icon: "👥",
-      change: "+8.2%",
-      changeType: "positive",
-      color: "#2563eb",
-    },
-    {
-      title: "Active Today",
-      value: employees.filter(
-        (employee) => employee.status === "Active"
-      ).length,
-      icon: "✅",
-      change: "+2.1%",
-      changeType: "positive",
-      color: "#16a34a",
-    },
-    {
-      title: "On Leave",
-      value: "12",
-      icon: "🏖️",
-      change: "-3.4%",
-      changeType: "negative",
-      color: "#f59e0b",
-    },
-    {
-      title: "New Hires (Month)",
-      value: "8",
-      icon: "🎉",
-      change: "+15%",
-      changeType: "positive",
-      color: "#8b5cf6",
-    },
-  ];
 
   // Add employee
   const handleSave = () => {
@@ -173,50 +128,18 @@ function Dashboard() {
   };
 
   return (
-    <div className="dashboard-container">
-
-      {/* ================= HEADER ================= */}
-      <div className="dashboard-header">
-
-        <div>
-          <h2>Dashboard</h2>
-          <p className="subtitle">Welcome back, Chandra!</p>
-        </div>
-
-        <div className="header-actions">
-
-          <span className="dashboard-date">
-            {currentTime.toLocaleDateString("en-GB", {
-              weekday: "short",
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })}
-          </span>
-
-        </div>
-      </div>
-
-
-      {/* ================= STATISTICS ================= */}
-      <div className="stats-grid">
-
-        {stats.map((stat, index) => (
-          <StatCard
-            key={index}
-            title={stat.title}
-            value={stat.value}
-            icon={stat.icon}
-            change={stat.change}
-            changeType={stat.changeType}
-            color={stat.color}
-          />
-        ))}
-
-      </div>
-
-
-      {/* ================= ACTIVITY + ATTENDANCE ================= */}
+    <PageSurface
+      title="Dashboard"
+      subtitle="Welcome back, Chandra. Here is your team at a glance."
+      icon="fa-gauge-high"
+      actionLabel="View reports"
+      stats={[
+        { label: "Total employees", value: employees.length, note: "+8.2% vs last month" },
+        { label: "Active today", value: employees.filter((employee) => employee.status === "Active").length, note: "+2.1% this week" },
+        { label: "On leave", value: "12", note: "6.2% of workforce", tone: "warning" },
+        { label: "New hires", value: "8", note: "+15% this month" },
+      ]}
+    >
       <div className="dashboard-sections-grid">
 
         <div className="card activity-card">
@@ -284,7 +207,6 @@ function Dashboard() {
       </div>
 
 
-      {/* ================= ADD EMPLOYEE MODAL ================= */}
       <Modal
         show={showModal}
         title="Add Employee"
@@ -351,7 +273,7 @@ function Dashboard() {
 
       </Modal>
 
-    </div>
+    </PageSurface>
   );
 }
 

@@ -1,4 +1,4 @@
-function PageSurface({ title, subtitle, icon, stats, children, actionLabel }) {
+function PageSurface({ title, subtitle, icon, stats, children, actionLabel, onAction }) {
   return (
     <div className="workspace-page">
       <div className="workspace-heading">
@@ -11,8 +11,10 @@ function PageSurface({ title, subtitle, icon, stats, children, actionLabel }) {
             <p>{subtitle}</p>
           </div>
         </div>
-        {actionLabel && <button className="workspace-action">{actionLabel}</button>}
+        {actionLabel && <button className="workspace-action" type="button" onClick={onAction}>{actionLabel}</button>}
       </div>
+yy
+yh
 
       <div className="workspace-stats">
         {stats.map((stat) => (

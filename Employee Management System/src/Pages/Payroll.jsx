@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "../Payroll.css";
-import StatCard from "../Components/StatCard";
+import PageSurface from "../Components/PageSurface";
 
 function Payroll() {
   const [search, setSearch] = useState("");
@@ -43,64 +43,21 @@ function Payroll() {
   );
 
   return (
-    <div className="payroll-page">
+    <PageSurface
+      title="Payroll"
+      subtitle="Manage salaries, payslips and payment history."
+      icon="fa-credit-card"
+      actionLabel="Process Payroll"
+      stats={[
+        { label: "Total employees", value: "3", note: "+8.2% this month" },
+        { label: "Payroll processed", value: "2", note: "66.7% complete" },
+        { label: "Pending payments", value: "1", note: "Needs attention", tone: "warning" },
+        { label: "Total payroll", value: "₹1,50,000", note: "+12% vs last month" },
+      ]}
+    >
 
       {/* Main Content */}
-      <main className="payroll-content">
-
-        {/* Header */}
-        <div className="page-header">
-          <div>
-            <h1>Payroll</h1>
-            <p>
-              Manage employee salaries, generate payslips and view payment
-              history.
-            </p>
-          </div>
-
-          <div className="breadcrumb">
-            {/* <span>Home</span>
-            <span className="arrow">›</span>
-            <strong>Payroll</strong> */}
-          </div>
-        </div>
-
-        {/* Statistics */}
-        <section className="stats-grid">
-          <StatCard
-            title="Total Employees"
-            value="3"
-            icon="👥"
-            change="+8.2%"
-            changeType="positive"
-            color="#2563eb"
-          />
-          <StatCard
-            title="Payroll Processed"
-            value="2"
-            icon="✓"
-            change="+2.1%"
-            changeType="positive"
-            color="#16a34a"
-          />
-          <StatCard
-            title="Pending Payments"
-            value="1"
-            icon="◷"
-            change="-3.4%"
-            changeType="negative"
-            color="#f59e0b"
-          />
-          <StatCard
-            title="Total Payroll Amount"
-            value="₹ 1,50,000"
-            icon="₹"
-            change="+12%"
-            changeType="positive"
-            color="#8b5cf6"
-          />
-
-        </section>
+      <section className="workspace-panel workspace-panel-wide payroll-directory">
 
         {/* Filters */}
         <section className="filter-box">
@@ -281,20 +238,10 @@ function Payroll() {
 
         </section>
 
-      </main>
+      </section>
 
       {/* Footer */}
-      <footer className="payroll-footer">
-        <span>© 2025 TeamSync. All rights reserved.</span>
-
-        <div>
-          <a href="/">Privacy</a>
-          <a href="/">Terms</a>
-          <a href="/">Help</a>
-        </div>
-      </footer>
-
-    </div>
+    </PageSurface>
   );
 }
 

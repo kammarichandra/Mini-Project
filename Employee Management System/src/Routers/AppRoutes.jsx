@@ -10,12 +10,14 @@ import Leave_Managment from "../Pages/Leave_Managment";
 import Attendance from "../Pages/Attendance";
 import Payroll from "../Pages/Payroll";
 import Home from "../Pages/Home";
+import Register from "../Pages/Register";
 
 const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       <Route
         path="/dashboard"

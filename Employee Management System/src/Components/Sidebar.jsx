@@ -1,16 +1,16 @@
 import { NavLink } from "react-router-dom";
 import logo from "../assets/logo1.png";
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${isOpen ? " sidebar-open" : ""}`} id="main-navigation">
       <div className="sidebar-brand">
         <img className="sidebar-brand-logo" src={logo} alt="TeamSync logo" />
         <span>TeamSync</span>
        
       </div>
 
-      <nav className="sidebar-nav" aria-label="Main navigation">
+      <nav className="sidebar-nav" aria-label="Main navigation" onClick={onClose}>
         <NavLink to="/dashboard" className={({ isActive }) => (isActive ? "active" : "") }>
           <span><i className="fa-solid fa-gauge-high"></i></span> Dashboard
         </NavLink>

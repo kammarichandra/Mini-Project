@@ -19,7 +19,7 @@ function Home() {
         </nav>
         <div className="home-nav-actions">
           <button className="nav-login" onClick={() => navigate("/login")}>Login</button>
-          <button className="nav-start" onClick={() => navigate("/login")}>Get Started</button>
+          <button className="nav-start" onClick={() => navigate("/register")}>Get Started</button>
         </div>
       </header>
 
@@ -29,7 +29,7 @@ function Home() {
             <span className="hero-label">SMART HR · SIMPLE WORKFLOWS</span>
             <h1>Empowering Your People.<br /><span>Building a Better Tomorrow.</span></h1>
             <p>All-in-one HR software to manage your workforce, simplify HR processes, and help your team grow.</p>
-            <div className="hero-buttons"><button className="get-started" onClick={() => navigate("/login")}>Get Started <span>→</span></button><button className="learn-more"><span>▷</span> Watch Demo</button></div>
+            <div className="hero-buttons"><button className="get-started" onClick={() => navigate("/register")}>Get Started <span>→</span></button><button className="learn-more"><span>▷</span> Watch Demo</button></div>
           </div>
           <div className="hero-photo">
             <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1000&q=85" alt="A team collaborating around a table" />
@@ -49,7 +49,7 @@ function Home() {
           </div>
         </section>
 
-        <section className="home-cta" id="contact"><div><span className="section-kicker">BUILT FOR PEOPLE</span><h2>Make HR simpler for everyone.</h2><p>Give managers and employees one friendly place to work together.</p></div><button className="nav-start" onClick={() => navigate("/login")}>Start with TeamSync&nbsp; →</button></section>
+        <section className="home-cta" id="contact"><div><span className="section-kicker">BUILT FOR PEOPLE</span><h2>Make HR simpler for everyone.</h2><p>Give managers and employees one friendly place to work together.</p></div><button className="nav-start" onClick={() => navigate("/register")}>Start with TeamSync&nbsp; →</button></section>
       </main>
 
       <footer className="home-footer">

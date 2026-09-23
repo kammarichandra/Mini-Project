@@ -1,5 +1,5 @@
 import { useState } from "react";
-import StatCard from "../Components/StatCard";
+import PageSurface from "../Components/PageSurface";
 
 
 const employeeData = [
@@ -157,51 +157,29 @@ function Employees() {
   };
 
   return (
-    <div className="employee-page">
+    <PageSurface
+      title="Employees"
+      subtitle="Manage your team, roles and employee records."
+      icon="fa-users"
+      actionLabel="Add Employee"
+      onAction={addEmployee}
+      stats={[
+        { label: "Total employees", value: totalEmployees, note: "+8.2% vs last month" },
+        { label: "Active employees", value: activeEmployees, note: "+2.1% this month" },
+        { label: "On leave", value: employeesOnLeave, note: "6.2% of workforce", tone: "warning" },
+        { label: "New joiners", value: "0", note: "This month" },
+      ]}
+    >
 
     
       {/* ================= MAIN CONTENT ================= */}
-      <main className="main-content">
-
-        
-        {/* ================= STAT CARDS ================= */}
-        <div className="stats-grid">
-          <StatCard
-            title="Total Employees"
-            value={totalEmployees}
-            icon="👥"
-            change="+8.2%"
-            changeType="positive"
-            color="#2563eb"
-          />
-          <StatCard
-            title="Active Employees"
-            value={activeEmployees}
-            icon="👤"
-            change="+2.1%"
-            changeType="positive"
-            color="#16a34a"
-          />
-          <StatCard
-            title="On Leave"
-            value={employeesOnLeave}
-            icon="✈"
-            change="-3.4%"
-            changeType="negative"
-            color="#f59e0b"
-          />
-          <StatCard
-            title="New Joiners (This Month)"
-            value="0"
-            icon="👤+"
-            change="0%"
-            changeType="positive"
-            color="#8b5cf6"
-          />
-
+      <section className="workspace-panel workspace-panel-wide directory-panel">
+        <div className="panel-heading">
+          <h2>Employee directory</h2>
+          <span>{filteredEmployees.length} of {employees.length} employees</span>
         </div>
 
-
+        
         {/* ================= SEARCH / FILTER ================= */}
         <div className="filter-box">
 
@@ -401,23 +379,11 @@ function Employees() {
 
         </div>
 
-      </main>
+      </section>
 
 
       {/* ================= FOOTER ================= */}
-      <footer className="page-footer">
-
-        <span>© 2025 TeamSync. All rights reserved.</span>
-
-        <div>
-          <span>Privacy</span>
-          <span>Terms</span>
-          <span>Help</span>
-        </div>
-
-      </footer>
-
-    </div>
+    </PageSurface>
   );
 }
 
