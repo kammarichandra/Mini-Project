@@ -13,8 +13,7 @@ function PageSurface({ title, subtitle, icon, stats, children, actionLabel, onAc
         </div>
         {actionLabel && <button className="workspace-action" type="button" onClick={onAction}>{actionLabel}</button>}
       </div>
-yy
-yh
+
 
       <div className="workspace-stats">
         {stats.map((stat) => (

@@ -181,7 +181,7 @@
 
 .hero-photo>img {
     display: block;
-    width: 100%;
+    width: 450px;
     height: 323px;
     object-fit: cover;
     border: 8px solid #fff;

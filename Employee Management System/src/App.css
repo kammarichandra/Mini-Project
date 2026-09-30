@@ -1753,6 +1753,89 @@ body {
   accent-color: #168ee8;
 }
 
+.settings-feedback {
+  margin: 13px 0 0;
+  color: #159e83;
+  font-size: 12px;
+}
+
+.account-setting {
+  display: grid;
+  gap: 7px;
+  color: #506b88;
+  font-size: 12px;
+}
+
+.account-setting input,
+.leave-request-form input,
+.leave-request-form select {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #dce8f2;
+  border-radius: 5px;
+  color: #355574;
+  font: inherit;
+}
+
+.leave-request-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid #dce8f2;
+  border-radius: 6px;
+  background: #f8fbfd;
+}
+
+.leave-request-form label {
+  display: grid;
+  gap: 6px;
+  color: #506b88;
+  font-size: 11px;
+}
+
+.leave-submit {
+  justify-self: start;
+}
+
+.leave-form-error {
+  align-self: center;
+  margin: 0;
+  color: #c2413b;
+  font-size: 12px;
+}
+
+.leave-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.leave-actions button {
+  padding: 6px 8px;
+  border: 1px solid #dce8f2;
+  border-radius: 5px;
+  background: #fff;
+  color: #355574;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.leave-actions button:first-child {
+  border-color: #ccebdd;
+  color: #16805a;
+}
+
+.leave-actions button:last-child {
+  border-color: #f2d5d3;
+  color: #c2413b;
+}
+
+.negative {
+  color: #c2413b;
+}
+
 .profile-summary {
   display: flex;
   align-items: center;
@@ -1820,6 +1903,40 @@ body {
   border-top: 1px solid #edf2f6;
   color: #58718d;
   font-size: 11px;
+}
+
+.attendance-table {
+  overflow-x: auto;
+}
+
+.attendance-table>div {
+  min-width: 620px;
+  grid-template-columns: minmax(140px, 1.3fr) minmax(110px, 1fr) 85px minmax(130px, 0.9fr);
+}
+
+.attendance-table select,
+.performance-review-form input,
+.performance-review-form select,
+.performance-review-form textarea {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #dce8f2;
+  border-radius: 5px;
+  background: #fff;
+  color: #355574;
+  font: inherit;
+  font-size: 11px;
+}
+
+.attendance-table select:disabled {
+  background: #f4f7fa;
+  color: #8497ad;
+}
+
+.attendance-empty a,
+.performance-empty a {
+  color: #087bd3;
+  font-weight: 700;
 }
 
 .mini-table em,
@@ -1929,6 +2046,45 @@ body {
   margin-bottom: 20px;
 }
 
+.performance-review-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px;
+  border: 1px solid #dce8f2;
+  border-radius: 6px;
+  background: #f8fbfd;
+}
+
+.performance-review-form label {
+  display: grid;
+  gap: 6px;
+  color: #506b88;
+  font-size: 11px;
+}
+
+.performance-review-form textarea {
+  resize: vertical;
+}
+
+.review-notes-field {
+  grid-column: 1 / -1;
+}
+
+.performance-form-error {
+  align-self: center;
+  margin: 0;
+  color: #c2413b;
+  font-size: 12px;
+}
+
+.performance-meta {
+  margin: -12px 0 7px;
+  color: #8497ad;
+  font-size: 10px;
+}
+
 .metric-row>div:first-child {
   display: flex;
   justify-content: space-between;
@@ -1965,6 +2121,42 @@ body {
   border-radius: 7px;
   background: #eaf7ff;
   color: #168ee8;
+}
+
+.report-generator {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 13px;
+  border: 1px solid #dce8f2;
+  border-radius: 6px;
+  background: #f8fbfd;
+}
+
+.report-generator label {
+  color: #506b88;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.report-generator select {
+  min-width: 190px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #dce8f2;
+  border-radius: 5px;
+  background: #fff;
+  color: #355574;
+  font: inherit;
+  font-size: 11px;
+}
+
+.report-empty a,
+.payroll-directory .empty-state a {
+  color: #087bd3;
+  font-weight: 700;
 }
 
 .export-option {
@@ -2283,6 +2475,39 @@ body {
   color: #496681;
   font: inherit;
   font-size: 11px;
+}
+
+.payroll-directory .filter-group input[type="month"] {
+  width: 100%;
+  height: 38px;
+  padding: 0 11px;
+  border: 1px solid #dce8f2;
+  border-radius: 6px;
+  background: #fff;
+  color: #496681;
+  font: inherit;
+  font-size: 11px;
+}
+
+.payroll-directory .payroll-amount {
+  width: 118px;
+  height: 32px;
+  padding: 5px 7px;
+  border: 1px solid #dce8f2;
+  border-radius: 5px;
+  color: #355574;
+  font: inherit;
+  font-size: 11px;
+}
+
+.payroll-directory .empty-state {
+  padding: 30px 14px;
+  text-align: center;
+}
+
+.payroll-directory .payroll-feedback {
+  color: #16805a;
+  text-align: right;
 }
 
 .directory-panel .clear-filters-btn,
@@ -2606,4 +2831,37 @@ body {
   .workspace-title-wrap p {
     overflow-wrap: anywhere;
   }
+}
+
+@media (max-width: 570px) {
+
+    .monthly-card {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .monthly-chart {
+        height: 135px;
+
+        gap: 2px;
+
+        padding: 10px 5px 0;
+
+        overflow: hidden;
+    }
+
+    .chart-column {
+        min-width: 0;
+        gap: 4px;
+    }
+
+    .chart-bar {
+        width: 65%;
+        min-width: 7px;
+        max-width: 18px;
+    }
+
+    .chart-column span {
+        font-size: 7px;
+    }
 }

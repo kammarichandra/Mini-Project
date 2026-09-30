@@ -1,66 +1,46 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Modal from "../Components/Common/Modal";
 import PageSurface from "../Components/PageSurface";
+import {
+  createEmployeeId,
+  getEmployeeInitials,
+  getEmployeesFromStorage,
+  saveEmployeesToStorage,
+} from "../utils/employees";
 
-
-const employeeData = [
-  {
-    id: "EMP001",
-    initials: "RM",
-    name: "Rahul Mehta",
-    department: "Engineering",
-    designation: "Software Engineer",
-    email: "rahul@teamsync.com",
-    status: "Active",
-    color: "blue",
-  },
-  {
-    id: "EMP002",
-    initials: "SI",
-    name: "Sneha Iyer",
-    department: "Marketing",
-    designation: "Marketing Executive",
-    email: "sneha@teamsync.com",
-    status: "Active",
-    color: "pink",
-  },
-  {
-    id: "EMP003",
-    initials: "AK",
-    name: "Amit Kumar",
-    department: "HR",
-    designation: "HR Manager",
-    email: "amit@teamsync.com",
-    status: "On Leave",
-    color: "green",
-  },
-  {
-    id: "EMP004",
-    initials: "NS",
-    name: "Neha Singh",
-    department: "Finance",
-    designation: "Accountant",
-    email: "neha@teamsync.com",
-    status: "Active",
-    color: "purple",
-  },
-  {
-    id: "EMP005",
-    initials: "VR",
-    name: "Vikram Rao",
-    department: "Operations",
-    designation: "Operations Executive",
-    email: "vikram@teamsync.com",
-    status: "Active",
-    color: "yellow",
-  },
+const departments = [
+  "Development",
+  "Testing",
+  "HR",
+  "Management",
+  "Design",
+  "Engineering",
+  "Marketing",
+  "Finance",
+  "Operations",
 ];
 
+const emptyEmployeeForm = {
+  name: "",
+  department: "Development",
+  designation: "",
+  email: "",
+  status: "Active",
+};
+
 function Employees() {
-  const [employees, setEmployees] = useState(employeeData);
+  const [employees, setEmployees] = useState(getEmployeesFromStorage);
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("All Departments");
   const [status, setStatus] = useState("All Status");
   const [selectedIds, setSelectedIds] = useState([]);
+  const [modalMode, setModalMode] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [employeeForm, setEmployeeForm] = useState(emptyEmployeeForm);
+
+  useEffect(() => {
+    saveEmployeesToStorage(employees);
+  }, [employees]);
 
   const filteredEmployees = employees.filter((employee) => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -69,7 +49,7 @@ function Employees() {
       employee.email.toLowerCase().includes(normalizedSearch) ||
       employee.department.toLowerCase().includes(normalizedSearch) ||
       employee.designation.toLowerCase().includes(normalizedSearch) ||
-      employee.id.toLowerCase().includes(normalizedSearch);
+      String(employee.id).toLowerCase().includes(normalizedSearch);
 
     const departmentMatch =
       department === "All Departments" ||
@@ -88,6 +68,13 @@ function Employees() {
   const employeesOnLeave = employees.filter(
     (employee) => employee.status === "On Leave"
   ).length;
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const newJoiners = employees.filter((employee) => {
+    const addedAt = new Date(employee.addedAt);
+    return !Number.isNaN(addedAt.getTime()) && addedAt >= monthStart;
+  }).length;
 
   const hasActiveFilters =
     search.trim() !== "" ||
@@ -120,29 +107,59 @@ function Employees() {
     });
   };
 
-  const addEmployee = () => {
-    const name = window.prompt("Employee name");
-    if (!name?.trim()) return;
+  const openAddEmployee = () => {
+    setSelectedEmployee(null);
+    setEmployeeForm(emptyEmployeeForm);
+    setModalMode("add");
+  };
 
-    const nextNumber = employees.length + 1;
-    const newEmployee = {
-      id: `EMP${String(nextNumber).padStart(3, "0")}`,
-      initials: name
-        .trim()
-        .split(/\s+/)
-        .map((part) => part[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase(),
-      name: name.trim(),
-      department: "Engineering",
-      designation: "New Employee",
-      email: `${name.trim().toLowerCase().replace(/\s+/g, ".")}@teamsync.com`,
-      status: "Active",
-      color: "blue",
+  const openEmployeeModal = (employee, mode) => {
+    setSelectedEmployee(employee);
+    setEmployeeForm({
+      name: employee.name,
+      department: employee.department,
+      designation: employee.designation,
+      email: employee.email,
+      status: employee.status,
+    });
+    setModalMode(mode);
+  };
+
+  const closeEmployeeModal = () => setModalMode(null);
+
+  const saveEmployee = () => {
+    const name = employeeForm.name.trim();
+    if (!name) {
+      window.alert("Please enter an employee name.");
+      return;
+    }
+
+    const employeeDetails = {
+      ...employeeForm,
+      name,
+      initials: getEmployeeInitials(name),
+      designation: employeeForm.designation.trim() || "Employee",
+      email: employeeForm.email.trim(),
+      color: selectedEmployee?.color || "blue",
+      addedAt: selectedEmployee?.addedAt || new Date().toISOString(),
     };
 
-    setEmployees((current) => [...current, newEmployee]);
+    if (selectedEmployee) {
+      setEmployees((current) =>
+        current.map((employee) =>
+          employee.id === selectedEmployee.id
+            ? { ...employee, ...employeeDetails }
+            : employee
+        )
+      );
+    } else {
+      setEmployees((current) => [
+        ...current,
+        { ...employeeDetails, id: createEmployeeId(current) },
+      ]);
+    }
+
+    closeEmployeeModal();
   };
 
   const deleteEmployee = (id) => {
@@ -162,12 +179,12 @@ function Employees() {
       subtitle="Manage your team, roles and employee records."
       icon="fa-users"
       actionLabel="Add Employee"
-      onAction={addEmployee}
+      onAction={openAddEmployee}
       stats={[
-        { label: "Total employees", value: totalEmployees, note: "+8.2% vs last month" },
-        { label: "Active employees", value: activeEmployees, note: "+2.1% this month" },
-        { label: "On leave", value: employeesOnLeave, note: "6.2% of workforce", tone: "warning" },
-        { label: "New joiners", value: "0", note: "This month" },
+        { label: "Total employees", value: totalEmployees, note: "Saved records" },
+        { label: "Active employees", value: activeEmployees, note: "Current status" },
+        { label: "On leave", value: employeesOnLeave, note: "Current status", tone: "warning" },
+        { label: "New joiners", value: newJoiners, note: "Added this month" },
       ]}
     >
 
@@ -200,11 +217,9 @@ function Employees() {
             onChange={(e) => setDepartment(e.target.value)}
           >
             <option>All Departments</option>
-            <option>Engineering</option>
-            <option>Marketing</option>
-            <option>HR</option>
-            <option>Finance</option>
-            <option>Operations</option>
+            {departments.map((departmentOption) => (
+              <option key={departmentOption}>{departmentOption}</option>
+            ))}
           </select>
 
 
@@ -217,11 +232,6 @@ function Employees() {
             <option>On Leave</option>
           </select>
 
-
-          {/* <button className="add-employee-btn" onClick={addEmployee}>
-            <span>＋</span>
-            Add Employee
-          </button> */}
 
           {hasActiveFilters && (
             <button
@@ -269,7 +279,9 @@ function Employees() {
               {filteredEmployees.length === 0 ? (
                 <tr>
                   <td className="empty-state" colSpan="9">
-                    No employees match the selected filters.
+                    {employees.length === 0
+                      ? "No employees have been added yet."
+                      : "No employees match the selected filters."}
                   </td>
                 </tr>
               ) : (
@@ -329,17 +341,29 @@ function Employees() {
                   <td>
                     <div className="actions">
 
-                      <button title="View">
+                      <button
+                        type="button"
+                        title="View"
+                        aria-label={`View ${employee.name}`}
+                        onClick={() => openEmployeeModal(employee, "view")}
+                      >
                         ◉
                       </button>
 
-                      <button title="Edit">
+                      <button
+                        type="button"
+                        title="Edit"
+                        aria-label={`Edit ${employee.name}`}
+                        onClick={() => openEmployeeModal(employee, "edit")}
+                      >
                         ✎
                       </button>
 
                       <button
+                        type="button"
                         className="delete-btn"
                         title="Delete"
+                        aria-label={`Delete ${employee.name}`}
                         onClick={() => deleteEmployee(employee.id)}
                       >
                         ♜
@@ -381,8 +405,106 @@ function Employees() {
 
       </section>
 
+      <Modal
+        show={modalMode !== null}
+        title={
+          modalMode === "view"
+            ? "Employee Details"
+            : modalMode === "edit"
+              ? "Edit Employee"
+              : "Add Employee"
+        }
+        onClose={closeEmployeeModal}
+        onSave={saveEmployee}
+        saveLabel={modalMode === "edit" ? "Save Changes" : "Add Employee"}
+        showSave={modalMode !== "view"}
+      >
+        <div className="mb-3">
+          <label className="form-label" htmlFor="employee-name">Name</label>
+          <input
+            id="employee-name"
+            type="text"
+            className="form-control"
+            placeholder="Enter employee name"
+            value={employeeForm.name}
+            disabled={modalMode === "view"}
+            onChange={(event) =>
+              setEmployeeForm((current) => ({ ...current, name: event.target.value }))
+            }
+          />
+        </div>
 
-      {/* ================= FOOTER ================= */}
+        <div className="mb-3">
+          <label className="form-label" htmlFor="employee-department">Department</label>
+          <select
+            id="employee-department"
+            className="form-select"
+            value={employeeForm.department}
+            disabled={modalMode === "view"}
+            onChange={(event) =>
+              setEmployeeForm((current) => ({
+                ...current,
+                department: event.target.value,
+              }))
+            }
+          >
+            {departments.map((departmentOption) => (
+              <option key={departmentOption} value={departmentOption}>
+                {departmentOption}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label" htmlFor="employee-designation">Designation</label>
+          <input
+            id="employee-designation"
+            type="text"
+            className="form-control"
+            placeholder="Enter designation"
+            value={employeeForm.designation}
+            disabled={modalMode === "view"}
+            onChange={(event) =>
+              setEmployeeForm((current) => ({
+                ...current,
+                designation: event.target.value,
+              }))
+            }
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label" htmlFor="employee-email">Email</label>
+          <input
+            id="employee-email"
+            type="email"
+            className="form-control"
+            placeholder="Enter email address"
+            value={employeeForm.email}
+            disabled={modalMode === "view"}
+            onChange={(event) =>
+              setEmployeeForm((current) => ({ ...current, email: event.target.value }))
+            }
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label" htmlFor="employee-status">Status</label>
+          <select
+            id="employee-status"
+            className="form-select"
+            value={employeeForm.status}
+            disabled={modalMode === "view"}
+            onChange={(event) =>
+              setEmployeeForm((current) => ({ ...current, status: event.target.value }))
+            }
+          >
+            <option value="Active">Active</option>
+            <option value="On Leave">On Leave</option>
+          </select>
+        </div>
+      </Modal>
     </PageSurface>
   );
 }

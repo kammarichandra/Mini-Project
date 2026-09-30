@@ -1,6 +1,14 @@
 import React from "react";
 
-function Modal({ show, title, children, onClose, onSave }) {
+function Modal({
+  show,
+  title,
+  children,
+  onClose,
+  onSave,
+  saveLabel = "Save",
+  showSave = true,
+}) {
   if (!show) return null;
 
   return (
@@ -25,18 +33,22 @@ function Modal({ show, title, children, onClose, onSave }) {
 
             <div className="modal-footer">
               <button
+                type="button"
                 className="btn btn-secondary"
                 onClick={onClose}
               >
                 Close
               </button>
 
-              <button
-                className="btn btn-primary"
-                onClick={onSave}
-              >
-                Save
-              </button>
+              {showSave && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={onSave}
+                >
+                  {saveLabel}
+                </button>
+              )}
             </div>
 
           </div>

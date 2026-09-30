@@ -1,17 +1,183 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import PageSurface from "../Components/PageSurface";
+import { getEmployeesFromStorage } from "../utils/employees";
 
-function Attendance() {
-  return (
-    <PageSurface title="Attendance" subtitle="Monitor daily presence and attendance trends." icon="fa-calendar-check" actionLabel="Export Report" stats={[
-      { label: "Present today", value: "112", note: "+5.2% vs yesterday" },
-      { label: "On leave", value: "8", note: "6.2% of workforce", tone: "warning" },
-      { label: "Late arrivals", value: "6", note: "-2.1% this week" },
-      { label: "Attendance rate", value: "87%", note: "Healthy" },
-    ]}>
-      <section className="workspace-panel workspace-panel-wide"><div className="panel-heading"><h2>Today&apos;s attendance</h2><span>21 September 2026</span></div><div className="progress-summary"><strong>87%</strong><div><div className="wide-progress"><span style={{ width: "87%" }}></span></div><small>112 of 128 employees present</small></div></div><div className="mini-table"><div><b>Employee</b><b>Check-in</b><b>Status</b></div>{["Rahul Mehta", "Sneha Iyer", "Amit Kumar", "Neha Singh"].map((name, index) => <div key={name}><span>{name}</span><span>{index === 2 ? "--" : `09:${10 + index * 4}`}</span><em className={index === 2 ? "warning" : "positive"}>{index === 2 ? "On leave" : "Present"}</em></div>)}</div></section>
-      <section className="workspace-panel"><div className="panel-heading"><h2>Weekly trend</h2></div><div className="trend-bars">{[72, 84, 78, 91, 87, 94, 87].map((height, index) => <div key={index}><span style={{ height: `${height}%` }}></span><small>{["M", "T", "W", "T", "F", "S", "S"][index]}</small></div>)}</div></section>
-    </PageSurface>
-  )
+const attendanceStorageKey = "employeeManagementDashboardAttendance";
+const attendanceStatuses = ["Not marked", "Present", "Late", "Absent"];
+
+function getDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
-export default Attendance
+function getAttendanceHistory() {
+  try {
+    const history = JSON.parse(
+      window.localStorage.getItem(attendanceStorageKey) || "{}"
+    );
+    return history && typeof history === "object" && !Array.isArray(history)
+      ? history
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function csvValue(value) {
+  return `"${String(value).replaceAll('"', '""')}"`;
+}
+
+function Attendance() {
+  const [employees] = useState(getEmployeesFromStorage);
+  const [attendanceHistory, setAttendanceHistory] = useState(getAttendanceHistory);
+  const today = new Date();
+  const todayKey = getDateKey(today);
+  const todayRecords = attendanceHistory[todayKey] || {};
+  const activeEmployees = employees.filter((employee) => employee.status !== "On Leave");
+  const onLeaveCount = employees.length - activeEmployees.length;
+  const presentCount = activeEmployees.filter((employee) =>
+    ["Present", "Late"].includes(todayRecords[employee.id]?.status)
+  ).length;
+  const lateCount = activeEmployees.filter(
+    (employee) => todayRecords[employee.id]?.status === "Late"
+  ).length;
+  const attendanceRate = activeEmployees.length
+    ? Math.round((presentCount / activeEmployees.length) * 100)
+    : 0;
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(attendanceStorageKey, JSON.stringify(attendanceHistory));
+    } catch {
+      return;
+    }
+  }, [attendanceHistory]);
+
+  const updateAttendance = (employeeId, status) => {
+    setAttendanceHistory((current) => {
+      const currentDay = current[todayKey] || {};
+      const previousCheckIn = currentDay[employeeId]?.checkIn;
+      const checkIn = ["Present", "Late"].includes(status)
+        ? previousCheckIn || formatTime(new Date())
+        : "";
+
+      return {
+        ...current,
+        [todayKey]: {
+          ...currentDay,
+          [employeeId]: { status, checkIn },
+        },
+      };
+    });
+  };
+
+  const getWeeklyTrend = () => Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (6 - index));
+    const dateRecords = attendanceHistory[getDateKey(date)] || {};
+    const recordedPresent = activeEmployees.filter((employee) =>
+      ["Present", "Late"].includes(dateRecords[employee.id]?.status)
+    ).length;
+
+    return {
+      date: getDateKey(date),
+      label: date.toLocaleDateString(undefined, { weekday: "short" }),
+      rate: activeEmployees.length
+        ? Math.round((recordedPresent / activeEmployees.length) * 100)
+        : 0,
+    };
+  });
+
+  const exportReport = () => {
+    const rows = [
+      ["Employee ID", "Employee", "Department", "Date", "Check-in", "Status"],
+      ...employees.map((employee) => {
+        const record = todayRecords[employee.id];
+        const status = employee.status === "On Leave"
+          ? "On leave"
+          : record?.status || "Not marked";
+        return [employee.id, employee.name, employee.department, todayKey, record?.checkIn || "", status];
+      }),
+    ];
+    const csv = rows.map((row) => row.map(csvValue).join(",")).join("\n");
+    const file = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const downloadUrl = URL.createObjectURL(file);
+    const downloadLink = document.createElement("a");
+    downloadLink.href = downloadUrl;
+    downloadLink.download = `attendance-${todayKey}.csv`;
+    downloadLink.click();
+    URL.revokeObjectURL(downloadUrl);
+  };
+
+  const todayLabel = today.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  return (
+    <PageSurface
+      title="Attendance"
+      subtitle="Monitor daily presence and attendance trends."
+      icon="fa-calendar-check"
+      actionLabel="Export Report"
+      onAction={exportReport}
+      stats={[
+        { label: "Present today", value: presentCount, note: `of ${activeEmployees.length} active employees` },
+        { label: "On leave", value: onLeaveCount, note: "Employee directory", tone: "warning" },
+        { label: "Late arrivals", value: lateCount, note: "Marked today" },
+        { label: "Attendance rate", value: `${attendanceRate}%`, note: "Present or late" },
+      ]}
+    >
+      <section className="workspace-panel workspace-panel-wide">
+        <div className="panel-heading">
+          <h2>Today&apos;s attendance</h2><span>{todayLabel}</span>
+        </div>
+        <div className="progress-summary">
+          <strong>{attendanceRate}%</strong>
+          <div>
+            <div className="wide-progress"><span style={{ width: `${attendanceRate}%` }}></span></div>
+            <small>{presentCount} of {activeEmployees.length} active employees present</small>
+          </div>
+        </div>
+        {employees.length ? <div className="mini-table attendance-table">
+          <div><b>Employee</b><b>Department</b><b>Check-in</b><b>Status</b></div>
+          {employees.map((employee) => {
+            const record = todayRecords[employee.id];
+            const status = employee.status === "On Leave"
+              ? "On leave"
+              : record?.status || "Not marked";
+            return <div key={employee.id}>
+              <span>{employee.name}</span>
+              <span>{employee.department}</span>
+              <span>{record?.checkIn || "--"}</span>
+              <select
+                aria-label={`Attendance status for ${employee.name}`}
+                value={status}
+                disabled={employee.status === "On Leave"}
+                onChange={(event) => updateAttendance(employee.id, event.target.value)}
+              >
+                {employee.status === "On Leave" && <option>On leave</option>}
+                {attendanceStatuses.map((attendanceStatus) => <option key={attendanceStatus}>{attendanceStatus}</option>)}
+              </select>
+            </div>;
+          })}
+        </div> : <p className="panel-note attendance-empty">No employee records yet. <Link to="/Employees">Open the employee directory</Link> to add your team.</p>}
+      </section>
+      <section className="workspace-panel">
+        <div className="panel-heading"><h2>Weekly trend</h2></div>
+        <div className="trend-bars">{getWeeklyTrend().map((day) => <div key={day.date} title={`${day.rate}% present`}><span style={{ height: `${Math.max(day.rate, 3)}%` }}></span><small>{day.label}</small></div>)}</div>
+      </section>
+    </PageSurface>
+  );
+}
+
+export default Attendance;
