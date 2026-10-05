@@ -11,6 +11,8 @@ import Attendance from "../Pages/Attendance";
 import Payroll from "../Pages/Payroll";
 import Home from "../Pages/Home";
 import Register from "../Pages/Register";
+import Welcome from "../Pages/Welcome";
+import Recruitment from "../Pages/Recruitment";
 
 const AppRoutes = () => {
   return (
@@ -18,6 +20,15 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+
+      <Route
+        path="/welcome"
+        element={
+          <ProtectedRoute>
+            <Welcome />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/dashboard"
@@ -71,6 +82,33 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Reports />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/Candidates"
+        element={
+          <ProtectedRoute>
+            <Recruitment />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/Interviews"
+        element={
+          <ProtectedRoute>
+            <Recruitment />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/Hiring"
+        element={
+          <ProtectedRoute>
+            <Recruitment />
           </ProtectedRoute>
         }
       />

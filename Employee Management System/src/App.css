@@ -1753,10 +1753,72 @@ body {
   accent-color: #168ee8;
 }
 
+.theme-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 0;
+  border-bottom: 1px solid #edf2f6;
+}
+
+.theme-setting-copy {
+  display: grid;
+  gap: 5px;
+}
+
+.theme-setting-copy strong {
+  color: #355574;
+  font-size: 12px;
+}
+
+.theme-setting-copy span {
+  color: #8296ae;
+  font-size: 11px;
+}
+
+.theme-options {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #dce8f2;
+  border-radius: 9px;
+  background: #f5f8fc;
+}
+
+.theme-option {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #647b94;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 11px;
+  cursor: pointer;
+}
+
+.theme-option.selected {
+  border-color: #dce8f2;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(31, 85, 126, 0.08);
+  color: #1768e8;
+}
+
 .settings-feedback {
   margin: 13px 0 0;
   color: #159e83;
   font-size: 12px;
+}
+
+.settings-feedback.settings-error {
+  color: #c2413b;
 }
 
 .account-setting {
@@ -2864,4 +2926,147 @@ body {
     .chart-column span {
         font-size: 7px;
     }
+}
+
+:root[data-theme="dark"] body {
+  background: #101722;
+  color: #e2eaf4;
+}
+
+:root[data-theme="dark"] .app-header {
+  background: #151f2d;
+  border-bottom-color: #2b394c;
+}
+
+:root[data-theme="dark"] .sidebar {
+  background: #111b29;
+  border-right: 1px solid #2b394c;
+}
+
+:root[data-theme="dark"] .content {
+  background: #101722;
+}
+
+:root[data-theme="dark"] .workspace-page,
+:root[data-theme="dark"] .workspace-heading h1,
+:root[data-theme="dark"] .panel-heading h2 {
+  color: #e2eaf4;
+}
+
+:root[data-theme="dark"] .workspace-heading p,
+:root[data-theme="dark"] .panel-heading span,
+:root[data-theme="dark"] .workspace-stat span,
+:root[data-theme="dark"] .workspace-stat small,
+:root[data-theme="dark"] .account-setting,
+:root[data-theme="dark"] .setting-row {
+  color: #a4b4c8;
+}
+
+:root[data-theme="dark"] .workspace-stat,
+:root[data-theme="dark"] .workspace-panel,
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .directory-panel,
+:root[data-theme="dark"] .payroll-directory,
+:root[data-theme="dark"] .table-container {
+  border-color: #2b394c;
+  background-color: #192433;
+  color: #dbe5f1;
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.16);
+}
+
+:root[data-theme="dark"] .workspace-stat strong,
+:root[data-theme="dark"] .card-header h3,
+:root[data-theme="dark"] .activity-text {
+  color: #e2eaf4;
+}
+
+:root[data-theme="dark"] .setting-row,
+:root[data-theme="dark"] .theme-setting {
+  border-bottom-color: #2b394c;
+}
+
+:root[data-theme="dark"] .setting-row input:not([type="checkbox"]),
+:root[data-theme="dark"] .setting-row select,
+:root[data-theme="dark"] .account-setting input,
+:root[data-theme="dark"] .directory-panel input,
+:root[data-theme="dark"] .directory-panel select,
+:root[data-theme="dark"] .payroll-directory input,
+:root[data-theme="dark"] .payroll-directory select {
+  border-color: #3a4a60;
+  background-color: #111b29;
+  color: #e2eaf4;
+}
+
+:root[data-theme="dark"] .theme-setting-copy strong {
+  color: #dbe5f1;
+}
+
+:root[data-theme="dark"] .theme-setting-copy span,
+:root[data-theme="dark"] .theme-option {
+  color: #a4b4c8;
+}
+
+:root[data-theme="dark"] .theme-options {
+  border-color: #35465c;
+  background: #111b29;
+}
+
+:root[data-theme="dark"] .theme-option.selected {
+  border-color: #3a4a60;
+  background: #26364a;
+  color: #8bbcff;
+}
+
+:root[data-theme="dark"] .profile-summary,
+:root[data-theme="dark"] .profile-summary p {
+  color: #dbe5f1;
+}
+
+:root[data-theme="dark"] .table,
+:root[data-theme="dark"] table {
+  --bs-table-bg: #192433;
+  --bs-table-color: #dbe5f1;
+  --bs-table-border-color: #2b394c;
+}
+
+:root[data-theme="dark"] .table thead th,
+:root[data-theme="dark"] table thead th {
+  background-color: #202e40;
+  color: #e2eaf4;
+}
+
+:root[data-theme="dark"] .table tbody tr,
+:root[data-theme="dark"] table tbody tr {
+  border-color: #2b394c;
+  color: #dbe5f1;
+}
+
+:root[data-theme="dark"] .table tbody td,
+:root[data-theme="dark"] table tbody td {
+  background-color: #192433;
+  color: #dbe5f1;
+}
+
+:root[data-theme="dark"] .leave-request-form {
+  border-color: #2b394c;
+  background: #192433;
+}
+
+:root[data-theme="dark"] .leave-request-form label,
+:root[data-theme="dark"] .leave-actions button {
+  color: #dbe5f1;
+}
+
+:root[data-theme="dark"] .leave-request-form input,
+:root[data-theme="dark"] .leave-request-form select,
+:root[data-theme="dark"] .leave-actions button {
+  border-color: #3a4a60;
+  background: #111b29;
+}
+
+@media (max-width: 480px) {
+  .theme-setting {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }

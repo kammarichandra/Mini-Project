@@ -1,13 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import { getCurrentUser, logoutUser } from "../utils/auth";
 
 function Header({ onMenuToggle }) {
   const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userEmail");
-    navigate("/login", { replace: true });
-  };
+  const user = getCurrentUser();
 
   return (
     <header className="app-header">
@@ -31,10 +27,10 @@ function Header({ onMenuToggle }) {
         </button>
         <div className="header-avatar">CS</div>
         <div className="header-user-copy">
-          <strong>Chandra</strong>
-          <small>Employee</small>
+          <strong>{user?.fullName || "User"}</strong>
+          <small>{user?.role || "Employee"}</small>
         </div>
-        <button className="user-menu-button" type="button" onClick={handleLogout} aria-label="Log out">
+        <button className="user-menu-button" type="button" onClick={() => { logoutUser(); navigate("/", { replace: true }); }} aria-label="Log out">
           <i className="fa-solid fa-chevron-down" aria-hidden="true"></i>
         </button>
       </div>

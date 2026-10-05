@@ -14,7 +14,6 @@ function PageSurface({ title, subtitle, icon, stats, children, actionLabel, onAc
         {actionLabel && <button className="workspace-action" type="button" onClick={onAction}>{actionLabel}</button>}
       </div>
 
-
       <div className="workspace-stats">
         {stats.map((stat) => (
           <div className="workspace-stat" key={stat.label}>

@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import "../Payroll.css";
 import PageSurface from "../Components/PageSurface";
 import { getEmployeesFromStorage } from "../utils/employees";
-import { createCsvContent, downloadCsv } from "../utils/csv";
+import { downloadPayslipPdf } from "../utils/payslipPdf";
+import { getCurrentUser, normalizeRole } from "../utils/auth";
 import {
   getPayrollRecord,
   getPayrollRecordsFromStorage,
@@ -24,6 +25,10 @@ function formatCurrency(amount) {
 }
 
 function Payroll() {
+  const currentUser = getCurrentUser();
+  const role = normalizeRole(currentUser?.role);
+  const isEmployee = role === "Employee";
+  const canManagePayroll = ["Super Admin", "HR Admin", "Finance"].includes(role);
   const [employees] = useState(getEmployeesFromStorage);
   const [payrollRecords, setPayrollRecords] = useState(getPayrollRecordsFromStorage);
   const [period, setPeriod] = useState(getCurrentPeriod);
@@ -33,21 +38,26 @@ function Payroll() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [feedback, setFeedback] = useState("");
 
-  useEffect(() => {
-    savePayrollRecordsToStorage(payrollRecords);
+  useEffect(() => { savePayrollRecordsToStorage(payrollRecords);
   }, [payrollRecords]);
 
-  const departments = [...new Set(employees.map((employee) => employee.department))];
+  const visibleEmployees = isEmployee
+    ? employees.filter(
+        (employee) =>
+          employee.email.toLowerCase() === currentUser?.email?.toLowerCase()
+      )
+    : employees;
+  const departments = [...new Set(visibleEmployees.map((employee) => employee.department))];
   const getRecord = (employeeId) => getPayrollRecord(payrollRecords, period, employeeId);
-  const filteredEmployees = employees.filter((employee) => {
-    const searchTerm = search.trim().toLowerCase();
-    const matchesSearch = [employee.name, employee.id, employee.department]
+  const filteredEmployees = visibleEmployees.filter((employee) => {
+  const searchTerm = search.trim().toLowerCase();
+  const matchesSearch = [employee.name, employee.id, employee.department]
       .some((value) => String(value).toLowerCase().includes(searchTerm));
     const matchesDepartment = department === "All Departments" || employee.department === department;
     const matchesStatus = status === "All Status" || getRecord(employee.id).status === status;
     return matchesSearch && matchesDepartment && matchesStatus;
   });
-  const paySummaries = employees.map((employee) => ({
+  const paySummaries = visibleEmployees.map((employee) => ({
     employee,
     ...getRecord(employee.id),
   }));
@@ -129,11 +139,11 @@ function Payroll() {
 
   const downloadStatement = (employee) => {
     const record = getRecord(employee.id);
-    const rows = [
-      ["Employee ID", "Employee", "Department", "Period", "Basic salary", "Deductions", "Net salary", "Status"],
-      [employee.id, employee.name, employee.department, period, record.salary, record.deductions, Math.max(record.salary - record.deductions, 0), record.status],
-    ];
-    downloadCsv(`payslip-${employee.id}-${period}.csv`, createCsvContent(rows));
+    downloadPayslipPdf(employee, record, period).catch((error) => {
+      setFeedback(
+        error instanceof Error ? error.message : "Unable to generate the payslip PDF."
+      );
+    });
   };
 
   const resetFilters = () => {
@@ -148,11 +158,11 @@ function Payroll() {
       title="Payroll"
       subtitle="Manage salaries, payslips and payment history."
       icon="fa-credit-card"
-      actionLabel="Process Payroll"
-      onAction={processPayroll}
+      actionLabel={canManagePayroll ? "Process Payroll" : undefined}
+      onAction={canManagePayroll ? processPayroll : undefined}
       stats={[
-        { label: "Total employees", value: employees.length, note: "From employee directory" },
-        { label: "Payroll processed", value: processedCount, note: `of ${employees.length} employees` },
+        { label: isEmployee ? "Payslips" : "Total employees", value: isEmployee ? processedCount : visibleEmployees.length, note: isEmployee ? `Available for ${period}` : "From employee directory" },
+        { label: isEmployee ? "Processed payslips" : "Payroll processed", value: processedCount, note: `of ${visibleEmployees.length} employees` },
         { label: "Pending payments", value: pendingCount, note: `For ${period}`, tone: "warning" },
         { label: "Total payroll", value: formatCurrency(payrollTotal), note: `Net amount for ${period}` },
       ]}
@@ -169,6 +179,7 @@ function Payroll() {
             <input id="payroll-period" type="month" value={period} onChange={(event) => { setPeriod(event.target.value); setSelectedIds([]); }} />
           </div>
 
+          {!isEmployee && <>
           <div className="filter-group">
             <label htmlFor="payroll-department">Department</label>
             <select id="payroll-department" value={department} onChange={(event) => setDepartment(event.target.value)}>
@@ -208,6 +219,7 @@ function Payroll() {
             </button>
 
           </div>
+          </>}
         </section>
 
         {/* Payroll Table */}
@@ -217,9 +229,7 @@ function Payroll() {
 
             <thead>
               <tr>
-                <th>
-                  <input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} aria-label="Select all visible employees" />
-                </th>
+                <th>{canManagePayroll && <input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} aria-label="Select all visible employees" />}</th>
                 <th>#</th>
                 <th>Employee</th>
                 <th>Department</th>
@@ -233,14 +243,18 @@ function Payroll() {
 
             <tbody>
               {filteredEmployees.length === 0 ? <tr><td className="empty-state" colSpan="9">
-                {employees.length === 0 ? <>No employees yet. <Link to="/Employees">Open the employee directory</Link> to add payroll records.</> : "No employees match these filters."}
+                {isEmployee
+                  ? "No payslip profile is linked to this account yet."
+                  : visibleEmployees.length === 0 && canManagePayroll
+                    ? <>No employees yet. <Link to="/Employees">Open the employee directory</Link> to add payroll records.</>
+                    : "No employees match these filters."}
               </td></tr> : filteredEmployees.map((employee, index) => {
                 const record = getRecord(employee.id);
                 const netSalary = Math.max(record.salary - record.deductions, 0);
                 return <tr key={employee.id}>
 
                   <td>
-                    <input type="checkbox" checked={selectedIds.includes(String(employee.id))} onChange={() => setSelectedIds((current) => current.includes(String(employee.id)) ? current.filter((id) => id !== String(employee.id)) : [...current, String(employee.id)])} aria-label={`Select ${employee.name} for payroll`} />
+                    {canManagePayroll && <input type="checkbox" checked={selectedIds.includes(String(employee.id))} onChange={() => setSelectedIds((current) => current.includes(String(employee.id)) ? current.filter((id) => id !== String(employee.id)) : [...current, String(employee.id)])} aria-label={`Select ${employee.name} for payroll`} />}
                   </td>
 
                   <td>{index + 1}</td>
@@ -266,9 +280,9 @@ function Payroll() {
                     </span>
                   </td>
 
-                  <td><input className="payroll-amount" type="number" min="0" step="0.01" aria-label={`Basic salary for ${employee.name}`} value={record.salary || ""} placeholder="Set amount" onChange={(event) => updateAmount(employee.id, "salary", event.target.value)} /></td>
+                  <td>{canManagePayroll ? <input className="payroll-amount" type="number" min="0" step="0.01" aria-label={`Basic salary for ${employee.name}`} value={record.salary || ""} placeholder="Set amount" onChange={(event) => updateAmount(employee.id, "salary", event.target.value)} /> : formatCurrency(record.salary)}</td>
 
-                  <td><input className="payroll-amount" type="number" min="0" max={record.salary} step="0.01" aria-label={`Deductions for ${employee.name}`} value={record.deductions || ""} placeholder="0.00" onChange={(event) => updateAmount(employee.id, "deductions", event.target.value)} /></td>
+                  <td>{canManagePayroll ? <input className="payroll-amount" type="number" min="0" max={record.salary} step="0.01" aria-label={`Deductions for ${employee.name}`} value={record.deductions || ""} placeholder="0.00" onChange={(event) => updateAmount(employee.id, "deductions", event.target.value)} /> : formatCurrency(record.deductions)}</td>
 
                   <td>{formatCurrency(netSalary)}</td>
 

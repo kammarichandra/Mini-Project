@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo1.png";
+import { registerUser, roles } from "../utils/auth";
 import "../Register.css";
 
 const FieldIcon = ({ type }) => {
@@ -17,7 +18,7 @@ const FieldIcon = ({ type }) => {
 
 function Register() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ fullName: "", email: "", password: "", confirmPassword: "" });
+  const [form, setForm] = useState({ fullName: "", email: "", role: "Employee", password: "", confirmPassword: "" });
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState("");
 
@@ -39,8 +40,18 @@ function Register() {
       setError("Please accept the Terms & Conditions.");
       return;
     }
-    setError("");
-    navigate("/login", { state: { registered: true } });
+    try {
+      registerUser({
+        fullName: form.fullName.trim(),
+        email: form.email,
+        role: form.role,
+        password: form.password,
+      });
+      setError("");
+      navigate("/login", { state: { registered: true } });
+    } catch (registrationError) {
+      setError(registrationError.message);
+    }
   };
 
   return (
@@ -76,6 +87,15 @@ function Register() {
                 <div className="register-input-wrap">
                   <FieldIcon type="mail" />
                   <input name="email" type="email" value={form.email} onChange={updateField} placeholder="Enter your email address" autoComplete="email" />
+                </div>
+              </label>
+
+              <label className="register-field">
+                <span>Role</span>
+                <div className="register-input-wrap">
+                  <select name="role" value={form.role} onChange={updateField}>
+                    {roles.map((role) => <option key={role} value={role}>{role}</option>)}
+                  </select>
                 </div>
               </label>
 

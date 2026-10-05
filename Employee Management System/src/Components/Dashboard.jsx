@@ -8,8 +8,10 @@ import {
   getEmployeesFromStorage,
   saveEmployeesToStorage,
 } from "../utils/employees";
+import { getCurrentUser } from "../utils/auth";
 
 function Dashboard() {
+  const currentUser = getCurrentUser();
   const [employees, setEmployees] = useState(getEmployeesFromStorage);
 
   const [showModal, setShowModal] = useState(false);
@@ -84,10 +86,10 @@ function Dashboard() {
   return (
     <PageSurface
       title="Dashboard"
-      subtitle="Welcome back, Chandra. Here is your team at a glance."
+      subtitle={`Welcome back, ${currentUser?.fullName || "User"}. Here is your team at a glance.`}
       icon="fa-gauge-high"
-      actionLabel="Add Employee"
-      onAction={() => setShowModal(true)}
+      actionLabel={["Admin", "Super Admin", "HR", "HR Admin"].includes(currentUser?.role) ? "Add Employee" : undefined}
+      onAction={["Admin", "Super Admin", "HR", "HR Admin"].includes(currentUser?.role) ? () => setShowModal(true) : undefined}
       stats={[
         { label: "Total employees", value: employees.length, note: "Saved records" },
         { label: "Active employees", value: activeEmployees, note: "Current status" },
@@ -231,4 +233,3 @@ function Dashboard() {
 }
 
 export default Dashboard;
-

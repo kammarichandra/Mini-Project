@@ -8,14 +8,14 @@ import Sidebar from './Components/Sidebar';
 const App = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const publicPaths = ["/", "/login", "/register"];
-  const shouldShowLayout = !publicPaths.includes(location.pathname);
+  const standalonePaths = ["/", "/login", "/register", "/welcome"];
+  const shouldShowLayout = !standalonePaths.includes(location.pathname);
 
   useEffect(() => {
-    document.body.classList.toggle("sidebar-is-open", sidebarOpen);
+    document.body.classList.toggle("sidebar-is-open", sidebarOpen && shouldShowLayout);
 
     return () => document.body.classList.remove("sidebar-is-open");
-  }, [sidebarOpen]);
+  }, [sidebarOpen, shouldShowLayout]);
 
   if (!shouldShowLayout) {
     return <AppRoutes />;

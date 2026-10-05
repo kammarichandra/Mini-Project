@@ -1,11 +1,13 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/logo1.png";
+import { getCurrentUser, getRoleHomePath, loginUser } from "../utils/auth";
 import "../Login.css";
 
 function Login({ onLogin }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,8 +15,9 @@ function Login({ onLogin }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (localStorage.getItem("isLoggedIn") === "true") {
-      navigate("/dashboard", { replace: true });
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      navigate(getRoleHomePath(currentUser.role), { replace: true });
     }
   }, [navigate]);
 
@@ -26,8 +29,11 @@ function Login({ onLogin }) {
       return;
     }
 
-    setError("");
-    localStorage.setItem("isLoggedIn", "true");
+    const user = loginUser(email, password);
+    if (!user) {
+      setError("Email or password is incorrect.");
+      return;
+    }
 
     if (rememberMe) {
       localStorage.setItem("userEmail", email);
@@ -39,7 +45,8 @@ function Login({ onLogin }) {
       onLogin();
     }
 
-    navigate("/dashboard", { replace: true });
+    const destination = location.state?.from;
+    navigate(destination || getRoleHomePath(user.role), { replace: true });
   };
 
   return (
@@ -98,4 +105,3 @@ function Login({ onLogin }) {
 }
 
 export default Login;
-

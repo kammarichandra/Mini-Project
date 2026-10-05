@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageSurface from "../Components/PageSurface";
+import { getCurrentUser, normalizeRole } from "../utils/auth";
 import { getEmployeesFromStorage } from "../utils/employees";
 
 const attendanceStorageKey = "employeeManagementDashboardAttendance";
@@ -35,13 +36,27 @@ function csvValue(value) {
 }
 
 function Attendance() {
+  const currentUser = getCurrentUser();
+  const role = normalizeRole(currentUser?.role);
   const [employees] = useState(getEmployeesFromStorage);
   const [attendanceHistory, setAttendanceHistory] = useState(getAttendanceHistory);
   const today = new Date();
   const todayKey = getDateKey(today);
   const todayRecords = attendanceHistory[todayKey] || {};
-  const activeEmployees = employees.filter((employee) => employee.status !== "On Leave");
-  const onLeaveCount = employees.length - activeEmployees.length;
+  const visibleEmployees = role === "Employee"
+    ? employees.filter(
+        (employee) =>
+          employee.email.toLowerCase() === currentUser?.email?.toLowerCase()
+      )
+    : role === "Manager"
+      ? employees.filter(
+          (employee) =>
+            employee.managerEmail?.toLowerCase() ===
+            currentUser?.email?.toLowerCase()
+        )
+      : employees;
+  const activeEmployees = visibleEmployees.filter((employee) => employee.status !== "On Leave");
+  const onLeaveCount = visibleEmployees.length - activeEmployees.length;
   const presentCount = activeEmployees.filter((employee) =>
     ["Present", "Late"].includes(todayRecords[employee.id]?.status)
   ).length;
@@ -99,7 +114,7 @@ function Attendance() {
   const exportReport = () => {
     const rows = [
       ["Employee ID", "Employee", "Department", "Date", "Check-in", "Status"],
-      ...employees.map((employee) => {
+      ...visibleEmployees.map((employee) => {
         const record = todayRecords[employee.id];
         const status = employee.status === "On Leave"
           ? "On leave"
@@ -148,9 +163,9 @@ function Attendance() {
             <small>{presentCount} of {activeEmployees.length} active employees present</small>
           </div>
         </div>
-        {employees.length ? <div className="mini-table attendance-table">
+        {visibleEmployees.length ? <div className="mini-table attendance-table">
           <div><b>Employee</b><b>Department</b><b>Check-in</b><b>Status</b></div>
-          {employees.map((employee) => {
+          {visibleEmployees.map((employee) => {
             const record = todayRecords[employee.id];
             const status = employee.status === "On Leave"
               ? "On leave"
@@ -170,7 +185,13 @@ function Attendance() {
               </select>
             </div>;
           })}
-        </div> : <p className="panel-note attendance-empty">No employee records yet. <Link to="/Employees">Open the employee directory</Link> to add your team.</p>}
+        </div> : <p className="panel-note attendance-empty">
+          {role === "Employee"
+            ? "No attendance profile is linked to this account yet."
+            : role === "Manager"
+              ? "No employees are assigned to your team yet."
+              : <>No employee records yet. <Link to="/Employees">Open the employee directory</Link> to add your team.</>}
+        </p>}
       </section>
       <section className="workspace-panel">
         <div className="panel-heading"><h2>Weekly trend</h2></div>

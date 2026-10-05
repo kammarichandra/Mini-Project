@@ -8,11 +8,14 @@ import "./index.css";
 import "./App.css";
 import App from "./App";
 import { BrowserRouter } from "react-router-dom";
+import ThemeProvider from "./Components/ThemeProvider";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageSurface from "../Components/PageSurface";
+import { getCurrentUser, normalizeRole } from "../utils/auth";
 import { getEmployeesFromStorage } from "../utils/employees";
 
 const reviewStorageKey = "employeeManagementDashboardPerformanceReviews";
@@ -38,11 +39,26 @@ function formatReviewDate(date) {
 }
 
 function Performance() {
+  const currentUser = getCurrentUser();
+  const role = normalizeRole(currentUser?.role);
   const [employees] = useState(getEmployeesFromStorage);
   const [reviews, setReviews] = useState(getSavedReviews);
   const [showForm, setShowForm] = useState(false);
   const [reviewForm, setReviewForm] = useState(emptyReview);
   const [formError, setFormError] = useState("");
+  const visibleEmployees = role === "Manager"
+    ? employees.filter(
+        (employee) =>
+          employee.managerEmail?.toLowerCase() ===
+          currentUser?.email?.toLowerCase()
+      )
+    : employees;
+  const visibleEmployeeIds = new Set(
+    visibleEmployees.map((employee) => String(employee.id))
+  );
+  const visibleReviews = role === "Manager"
+    ? reviews.filter((review) => visibleEmployeeIds.has(String(review.employeeId)))
+    : reviews;
 
   useEffect(() => {
     try {
@@ -52,14 +68,14 @@ function Performance() {
     }
   }, [reviews]);
 
-  const reviewsOnTrack = reviews.filter((review) => review.goalsStatus === "On track").length;
-  const needsAttention = reviews.filter(
+  const reviewsOnTrack = visibleReviews.filter((review) => review.goalsStatus === "On track").length;
+  const needsAttention = visibleReviews.filter(
     (review) => review.goalsStatus === "Needs attention" || Number(review.score) <= 2
   ).length;
-  const averageScore = reviews.length
-    ? (reviews.reduce((total, review) => total + Number(review.score), 0) / reviews.length).toFixed(1)
+  const averageScore = visibleReviews.length
+    ? (visibleReviews.reduce((total, review) => total + Number(review.score), 0) / visibleReviews.length).toFixed(1)
     : "--";
-  const latestReviewsByEmployee = [...reviews]
+  const latestReviewsByEmployee = [...visibleReviews]
     .sort((first, second) => second.reviewDate.localeCompare(first.reviewDate))
     .reduce((latestReviews, review) => {
       const employeeId = String(review.employeeId);
@@ -75,7 +91,7 @@ function Performance() {
 
   const submitReview = (event) => {
     event.preventDefault();
-    const employee = employees.find(
+    const employee = visibleEmployees.find(
       (currentEmployee) => String(currentEmployee.id) === reviewForm.employeeId
     );
     if (!employee) {
@@ -106,19 +122,19 @@ function Performance() {
       actionLabel={showForm ? "Cancel Review" : "Start Review"}
       onAction={toggleReviewForm}
       stats={[
-        { label: "Reviews recorded", value: reviews.length, note: "Saved reviews" },
-        { label: "Goals on track", value: reviews.length ? `${Math.round((reviewsOnTrack / reviews.length) * 100)}%` : "--", note: `${reviewsOnTrack} of ${reviews.length} reviews` },
+        { label: "Reviews recorded", value: visibleReviews.length, note: "Saved reviews" },
+        { label: "Goals on track", value: visibleReviews.length ? `${Math.round((reviewsOnTrack / visibleReviews.length) * 100)}%` : "--", note: `${reviewsOnTrack} of ${visibleReviews.length} reviews` },
         { label: "Needs attention", value: needsAttention, note: "Reviews to follow up", tone: "warning" },
         { label: "Average score", value: averageScore, note: "Out of 5.0" },
       ]}
     >
       <section className="workspace-panel workspace-panel-wide">
-        <div className="panel-heading"><h2>Team performance</h2><span>{employees.length} employees</span></div>
+        <div className="panel-heading"><h2>Team performance</h2><span>{visibleEmployees.length} employees</span></div>
         {showForm && <form className="performance-review-form" onSubmit={submitReview}>
           <label><span>Employee</span>
             <select value={reviewForm.employeeId} onChange={(event) => setReviewForm((current) => ({ ...current, employeeId: event.target.value }))} required>
               <option value="">Select employee</option>
-              {employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.name} · {employee.department}</option>)}
+              {visibleEmployees.map((employee) => <option key={employee.id} value={employee.id}>{employee.name} · {employee.department}</option>)}
             </select>
           </label>
           <label><span>Score</span>
@@ -139,7 +155,7 @@ function Performance() {
           {formError && <p className="performance-form-error" role="alert">{formError}</p>}
         </form>}
 
-        {employees.length ? employees.map((employee) => {
+        {visibleEmployees.length ? visibleEmployees.map((employee) => {
           const review = latestReviewsByEmployee.get(String(employee.id));
           return <div className="metric-row" key={employee.id}>
             <div><strong>{employee.name}</strong><span>{review ? `${review.score} / 5` : "Not reviewed"}</span></div>
@@ -151,11 +167,11 @@ function Performance() {
       <section className="workspace-panel">
         <div className="panel-heading"><h2>Review history</h2></div>
         <div className="review-list">
-          {reviews.slice(0, 8).map((review) => <p key={review.id}>
+          {visibleReviews.slice(0, 8).map((review) => <p key={review.id}>
             <strong>{review.employeeName} · {review.score}/5</strong>
             <span>{formatReviewDate(review.reviewDate)} · {review.goalsStatus}</span>
           </p>)}
-          {reviews.length === 0 && <p className="panel-note">No reviews recorded yet.</p>}
+          {visibleReviews.length === 0 && <p className="panel-note">No reviews recorded yet.</p>}
         </div>
       </section>
     </PageSurface>

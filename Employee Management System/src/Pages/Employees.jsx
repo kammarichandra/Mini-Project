@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Modal from "../Components/Common/Modal";
 import PageSurface from "../Components/PageSurface";
+import { getDummyEmployees } from "../Apis/dummyEmployees";
+import { getCurrentUser, normalizeRole } from "../utils/auth";
 import {
   createEmployeeId,
   getEmployeeInitials,
@@ -25,11 +27,21 @@ const emptyEmployeeForm = {
   department: "Development",
   designation: "",
   email: "",
+  managerEmail: "",
   status: "Active",
 };
 
 function Employees() {
+  const currentUser = getCurrentUser();
+  const role = normalizeRole(currentUser?.role);
+  const canManageEmployees = ["Super Admin", "HR Admin"].includes(role);
+  const isEmployee = role === "Employee";
+  const isManager = role === "Manager";
   const [employees, setEmployees] = useState(getEmployeesFromStorage);
+  const [loading, setLoading] = useState(
+    () => getEmployeesFromStorage().length === 0
+  );
+  const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("All Departments");
   const [status, setStatus] = useState("All Status");
@@ -42,7 +54,57 @@ function Employees() {
     saveEmployeesToStorage(employees);
   }, [employees]);
 
-  const filteredEmployees = employees.filter((employee) => {
+  useEffect(() => {
+    if (getEmployeesFromStorage().length > 0) return undefined;
+
+    let cancelled = false;
+    getDummyEmployees()
+      .then((sampleEmployees) => {
+        if (!cancelled) {
+          setEmployees((current) =>
+            current.length === 0 ? sampleEmployees : current
+          );
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) setLoadError(error.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const visibleEmployees = isEmployee
+    ? employees.filter(
+        (employee) =>
+          employee.email.toLowerCase() === currentUser?.email?.toLowerCase()
+      )
+    : isManager
+      ? employees.filter(
+          (employee) =>
+            employee.managerEmail?.toLowerCase() ===
+            currentUser?.email?.toLowerCase()
+        )
+      : employees;
+  const profileEmployees =
+    isEmployee && visibleEmployees.length === 0
+      ? [{
+          id: "PROFILE",
+          name: currentUser?.fullName || "Employee",
+          email: currentUser?.email || "",
+          department: "Not assigned",
+          designation: "Employee",
+          status: "Active",
+          initials: getEmployeeInitials(currentUser?.fullName || "Employee"),
+          color: "blue",
+        }]
+      : visibleEmployees;
+
+  const filteredEmployees = profileEmployees.filter((employee) => {
     const normalizedSearch = search.trim().toLowerCase();
     const searchMatch =
       employee.name.toLowerCase().includes(normalizedSearch) ||
@@ -61,17 +123,17 @@ function Employees() {
     return searchMatch && departmentMatch && statusMatch;
   });
 
-  const totalEmployees = employees.length;
-  const activeEmployees = employees.filter(
+  const totalEmployees = profileEmployees.length;
+  const activeEmployees = profileEmployees.filter(
     (employee) => employee.status === "Active"
   ).length;
-  const employeesOnLeave = employees.filter(
+  const employeesOnLeave = profileEmployees.filter(
     (employee) => employee.status === "On Leave"
   ).length;
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
-  const newJoiners = employees.filter((employee) => {
+  const newJoiners = profileEmployees.filter((employee) => {
     const addedAt = new Date(employee.addedAt);
     return !Number.isNaN(addedAt.getTime()) && addedAt >= monthStart;
   }).length;
@@ -120,6 +182,7 @@ function Employees() {
       department: employee.department,
       designation: employee.designation,
       email: employee.email,
+      managerEmail: employee.managerEmail || "",
       status: employee.status,
     });
     setModalMode(mode);
@@ -140,6 +203,7 @@ function Employees() {
       initials: getEmployeeInitials(name),
       designation: employeeForm.designation.trim() || "Employee",
       email: employeeForm.email.trim(),
+      managerEmail: employeeForm.managerEmail.trim().toLowerCase(),
       color: selectedEmployee?.color || "blue",
       addedAt: selectedEmployee?.addedAt || new Date().toISOString(),
     };
@@ -176,10 +240,14 @@ function Employees() {
   return (
     <PageSurface
       title="Employees"
-      subtitle="Manage your team, roles and employee records."
+      subtitle={isEmployee
+        ? "View your employee profile."
+        : isManager
+          ? "View employee profiles assigned to your team."
+          : "Manage your team, roles and employee records."}
       icon="fa-users"
-      actionLabel="Add Employee"
-      onAction={openAddEmployee}
+      actionLabel={canManageEmployees ? "Add Employee" : undefined}
+      onAction={canManageEmployees ? openAddEmployee : undefined}
       stats={[
         { label: "Total employees", value: totalEmployees, note: "Saved records" },
         { label: "Active employees", value: activeEmployees, note: "Current status" },
@@ -192,13 +260,13 @@ function Employees() {
       {/* ================= MAIN CONTENT ================= */}
       <section className="workspace-panel workspace-panel-wide directory-panel">
         <div className="panel-heading">
-          <h2>Employee directory</h2>
-          <span>{filteredEmployees.length} of {employees.length} employees</span>
+          <h2>{isEmployee ? "My profile" : isManager ? "Team employees" : "Employee directory"}</h2>
+          <span>{filteredEmployees.length} of {profileEmployees.length} employees</span>
         </div>
 
         
         {/* ================= SEARCH / FILTER ================= */}
-        <div className="filter-box">
+        {!isEmployee && <div className="filter-box">
 
           <div className="search-box">
             <span>⌕</span>
@@ -246,7 +314,7 @@ function Employees() {
         </div>
 
 
-        {/* ================= EMPLOYEE TABLE ================= */}
+        /* ================= EMPLOYEE TABLE ================= */}
         <div className="table-container">
 
           <table>
@@ -254,12 +322,14 @@ function Employees() {
             <thead>
               <tr>
                 <th>
-                  <input
-                    type="checkbox"
-                    checked={allVisibleSelected}
-                    onChange={toggleAllVisible}
-                    aria-label="Select all visible employees"
-                  />
+                  {canManageEmployees && (
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      onChange={toggleAllVisible}
+                      aria-label="Select all visible employees"
+                    />
+                  )}
                 </th>
 
                 <th>#</th>
@@ -279,9 +349,15 @@ function Employees() {
               {filteredEmployees.length === 0 ? (
                 <tr>
                   <td className="empty-state" colSpan="9">
-                    {employees.length === 0
-                      ? "No employees have been added yet."
-                      : "No employees match the selected filters."}
+                    {loading
+                      ? "Loading sample employees..."
+                      : loadError
+                        ? loadError
+                      : profileEmployees.length === 0
+                        ? isManager
+                          ? "No employees are assigned to your team yet."
+                          : "No employees have been added yet."
+                        : "No employees match the selected filters."}
                   </td>
                 </tr>
               ) : (
@@ -290,12 +366,14 @@ function Employees() {
                 <tr key={employee.id}>
 
                   <td>
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(employee.id)}
-                      onChange={() => toggleEmployee(employee.id)}
-                      aria-label={`Select ${employee.name}`}
-                    />
+                    {canManageEmployees && (
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(employee.id)}
+                        onChange={() => toggleEmployee(employee.id)}
+                        aria-label={`Select ${employee.name}`}
+                      />
+                    )}
                   </td>
 
                   <td>{index + 1}</td>
@@ -350,24 +428,28 @@ function Employees() {
                         ◉
                       </button>
 
-                      <button
-                        type="button"
-                        title="Edit"
-                        aria-label={`Edit ${employee.name}`}
-                        onClick={() => openEmployeeModal(employee, "edit")}
-                      >
-                        ✎
-                      </button>
+                      {canManageEmployees && (
+                        <>
+                          <button
+                            type="button"
+                            title="Edit"
+                            aria-label={`Edit ${employee.name}`}
+                            onClick={() => openEmployeeModal(employee, "edit")}
+                          >
+                            ✎
+                          </button>
 
-                      <button
-                        type="button"
-                        className="delete-btn"
-                        title="Delete"
-                        aria-label={`Delete ${employee.name}`}
-                        onClick={() => deleteEmployee(employee.id)}
-                      >
-                        ♜
-                      </button>
+                          <button
+                            type="button"
+                            className="delete-btn"
+                            title="Delete"
+                            aria-label={`Delete ${employee.name}`}
+                            onClick={() => deleteEmployee(employee.id)}
+                          >
+                            ♜
+                          </button>
+                        </>
+                      )}
 
                     </div>
                   </td>
@@ -388,7 +470,7 @@ function Employees() {
             <span>
               Showing {filteredEmployees.length > 0 ? 1 : 0} –{" "}
               {filteredEmployees.length} of{" "}
-              {employees.length} employees
+              {profileEmployees.length} employees
             </span>
 
             <div className="pagination">
@@ -488,6 +570,21 @@ function Employees() {
             }
           />
         </div>
+
+        {canManageEmployees && <div className="mb-3">
+          <label className="form-label" htmlFor="employee-manager-email">Manager Email</label>
+          <input
+            id="employee-manager-email"
+            type="email"
+            className="form-control"
+            placeholder="Assign a manager by email"
+            value={employeeForm.managerEmail}
+            disabled={modalMode === "view"}
+            onChange={(event) =>
+              setEmployeeForm((current) => ({ ...current, managerEmail: event.target.value }))
+            }
+          />
+        </div>}
 
         <div className="mb-3">
           <label className="form-label" htmlFor="employee-status">Status</label>

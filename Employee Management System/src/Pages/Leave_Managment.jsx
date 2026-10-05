@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import PageSurface from "../Components/PageSurface";
+import { getCurrentUser, normalizeRole } from "../utils/auth";
+import { getEmployeesFromStorage } from "../utils/employees";
 
 const leaveStorageKey = "employeeManagementDashboardLeaveRequests";
 const initialRequests = [
@@ -40,10 +42,35 @@ function formatDateRange(startDate, endDate) {
 }
 
 function Leave_Managment() {
+  const currentUser = getCurrentUser();
+  const role = normalizeRole(currentUser?.role);
+  const isEmployee = role === "Employee";
+  const canReview = ["Super Admin", "HR Admin", "Manager"].includes(role);
   const [requests, setRequests] = useState(getLeaveRequests);
   const [showForm, setShowForm] = useState(false);
-  const [requestForm, setRequestForm] = useState(emptyRequest);
+  const [requestForm, setRequestForm] = useState(() => ({
+    ...emptyRequest,
+    name: isEmployee ? currentUser?.fullName || "" : "",
+  }));
   const [formError, setFormError] = useState("");
+  const teamEmails = getEmployeesFromStorage()
+    .filter(
+      (employee) =>
+        employee.managerEmail?.toLowerCase() ===
+        currentUser?.email?.toLowerCase()
+    )
+    .map((employee) => employee.email.toLowerCase());
+  const visibleRequests = isEmployee
+    ? requests.filter(
+        (request) =>
+          request.employeeEmail?.toLowerCase() ===
+          currentUser?.email?.toLowerCase()
+      )
+    : role === "Manager"
+      ? requests.filter((request) =>
+          teamEmails.includes(request.employeeEmail?.toLowerCase())
+        )
+      : requests;
 
   useEffect(() => {
     try {
@@ -53,13 +80,13 @@ function Leave_Managment() {
     }
   }, [requests]);
 
-  const pendingCount = requests.filter((request) => request.status === "Pending").length;
-  const approvedCount = requests.filter((request) => request.status === "Approved").length;
-  const rejectedCount = requests.filter((request) => request.status === "Rejected").length;
+  const pendingCount = visibleRequests.filter((request) => request.status === "Pending").length;
+  const approvedCount = visibleRequests.filter((request) => request.status === "Approved").length;
+  const rejectedCount = visibleRequests.filter((request) => request.status === "Rejected").length;
   const reviewedCount = approvedCount + rejectedCount;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const peopleOnLeave = requests.filter((request) => {
+  const peopleOnLeave = visibleRequests.filter((request) => {
     const startDate = new Date(`${request.startDate}T00:00:00`);
     const endDate = new Date(`${request.endDate}T00:00:00`);
     return request.status === "Approved" && startDate <= today && endDate >= today;
@@ -67,7 +94,10 @@ function Leave_Managment() {
 
   const toggleRequestForm = () => {
     setShowForm((current) => !current);
-    setRequestForm(emptyRequest);
+    setRequestForm({
+      ...emptyRequest,
+      name: isEmployee ? currentUser?.fullName || "" : "",
+    });
     setFormError("");
   };
 
@@ -83,11 +113,25 @@ function Leave_Managment() {
       return;
     }
 
+    const linkedEmployee = getEmployeesFromStorage().find(
+      (employee) => employee.name.toLowerCase() === name.toLowerCase()
+    );
     setRequests((current) => [
-      { ...requestForm, name, id: `leave-${Date.now()}`, status: "Pending" },
+      {
+        ...requestForm,
+        name,
+        employeeEmail: isEmployee
+          ? currentUser?.email
+          : linkedEmployee?.email || "",
+        id: `leave-${Date.now()}`,
+        status: "Pending",
+      },
       ...current,
     ]);
-    setRequestForm(emptyRequest);
+    setRequestForm({
+      ...emptyRequest,
+      name: isEmployee ? currentUser?.fullName || "" : "",
+    });
     setFormError("");
     setShowForm(false);
   };
@@ -111,7 +155,7 @@ function Leave_Managment() {
         </div>
 
         {showForm && <form className="leave-request-form" onSubmit={submitRequest}>
-          <label><span>Employee</span><input value={requestForm.name} onChange={(event) => setRequestForm((current) => ({ ...current, name: event.target.value }))} required /></label>
+          <label><span>Employee</span><input value={requestForm.name} disabled={isEmployee} onChange={(event) => setRequestForm((current) => ({ ...current, name: event.target.value }))} required /></label>
           <label><span>Leave type</span><select value={requestForm.type} onChange={(event) => setRequestForm((current) => ({ ...current, type: event.target.value }))}><option>Annual leave</option><option>Personal leave</option><option>Sick leave</option><option>Parental leave</option></select></label>
           <label><span>From</span><input type="date" value={requestForm.startDate} onChange={(event) => setRequestForm((current) => ({ ...current, startDate: event.target.value }))} required /></label>
           <label><span>To</span><input type="date" min={requestForm.startDate || undefined} value={requestForm.endDate} onChange={(event) => setRequestForm((current) => ({ ...current, endDate: event.target.value }))} required /></label>
@@ -120,7 +164,7 @@ function Leave_Managment() {
         </form>}
 
         <div className="request-list">
-          {requests.map((request) => <div className="request-row" key={request.id}>
+          {visibleRequests.map((request) => <div className="request-row" key={request.id}>
             <div className="large-avatar small-avatar">
               {request.name.split(" ").map((part) => part[0]).join("")}
             </div>
@@ -129,12 +173,12 @@ function Leave_Managment() {
               <p>{request.type} · {formatDateRange(request.startDate, request.endDate)}</p>
             </div>
             <em className={request.status === "Pending" ? "warning" : request.status === "Approved" ? "positive" : "negative"}>{request.status}</em>
-            {request.status === "Pending" && <div className="leave-actions">
+            {canReview && request.status === "Pending" && <div className="leave-actions">
               <button type="button" onClick={() => updateRequestStatus(request.id, "Approved")} aria-label={`Approve ${request.name}'s request`}>Approve</button>
               <button type="button" onClick={() => updateRequestStatus(request.id, "Rejected")} aria-label={`Reject ${request.name}'s request`}>Reject</button>
             </div>}
           </div>)}
-          {requests.length === 0 && <p className="panel-note">No leave requests yet.</p>}
+          {visibleRequests.length === 0 && <p className="panel-note">No leave requests yet.</p>}
         </div></section>
       <section className="workspace-panel">
         <div className="panel-heading">

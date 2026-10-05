@@ -129,7 +129,8 @@
   stroke-width: 1.4;
 }
 
-.register-input-wrap input {
+.register-input-wrap input,
+.register-input-wrap select {
   width: 100%;
   min-width: 0;
   border: 0;
