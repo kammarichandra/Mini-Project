@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Modal from "../Components/Common/Modal";
 import PageSurface from "./PageSurface";
 import {
@@ -8,10 +9,11 @@ import {
   getEmployeesFromStorage,
   saveEmployeesToStorage,
 } from "../utils/employees";
-import { getCurrentUser } from "../utils/auth";
+import { getCurrentUser, normalizeRole } from "../utils/auth";
 
 function Dashboard() {
   const currentUser = getCurrentUser();
+  const isEmployee = normalizeRole(currentUser?.role) === "Employee";
   const [employees, setEmployees] = useState(getEmployeesFromStorage);
 
   const [showModal, setShowModal] = useState(false);
@@ -82,6 +84,61 @@ function Dashboard() {
     }).length
   );
   const maxMonthlyEmployees = Math.max(...monthlyEmployeeCounts, 1);
+
+  if (isEmployee) {
+    const employee = employees.find(
+      (record) =>
+        record.email.toLowerCase() === currentUser?.email?.toLowerCase()
+    );
+    const displayName = employee?.name || currentUser?.fullName || "Employee";
+    const initials = getEmployeeInitials(displayName);
+
+    return (
+      <PageSurface
+        title="My Dashboard"
+        subtitle={`Welcome back, ${displayName}. Here is your employee overview.`}
+        icon="fa-gauge-high"
+        stats={[
+          { label: "Employee ID", value: employee?.id || "Not linked", note: "Your profile" },
+          { label: "Department", value: employee?.department || "Not assigned", note: "Current assignment" },
+          { label: "Position", value: employee?.designation || "Employee", note: "Job title" },
+          { label: "Status", value: employee?.status || "Profile pending", note: "Employment status" },
+        ]}
+      >
+        <section className="workspace-panel">
+          <div className="panel-heading">
+            <h2>My profile</h2>
+            <span>{employee?.status || "Profile pending"}</span>
+          </div>
+          <div className="profile-summary">
+            <div className="large-avatar">{initials}</div>
+            <div>
+              <strong>{displayName}</strong>
+              <p>{currentUser?.email || "No email on file"}</p>
+            </div>
+          </div>
+          {!employee && (
+            <p className="panel-note">
+              Your account is not linked to an employee record yet. Contact HR to complete your profile.
+            </p>
+          )}
+        </section>
+
+        <section className="workspace-panel">
+          <div className="panel-heading">
+            <h2>My workspace</h2>
+            <span>Quick links</span>
+          </div>
+          <div className="request-list">
+            <Link className="panel-button" to="/Attendance">View my attendance</Link>
+            <Link className="panel-button" to="/Leave_Management">Manage my leave</Link>
+            <Link className="panel-button" to="/Payroll">View my payslips</Link>
+            <Link className="panel-button" to="/settings">Account settings</Link>
+          </div>
+        </section>
+      </PageSurface>
+    );
+  }
 
   return (
     <PageSurface

@@ -137,7 +137,6 @@ function Employees() {
     const addedAt = new Date(employee.addedAt);
     return !Number.isNaN(addedAt.getTime()) && addedAt >= monthStart;
   }).length;
-
   const hasActiveFilters =
     search.trim() !== "" ||
     department !== "All Departments" ||
@@ -263,7 +262,6 @@ function Employees() {
           <h2>{isEmployee ? "My profile" : isManager ? "Team employees" : "Employee directory"}</h2>
           <span>{filteredEmployees.length} of {profileEmployees.length} employees</span>
         </div>
-
         
         {/* ================= SEARCH / FILTER ================= */}
         {!isEmployee && <div className="filter-box">

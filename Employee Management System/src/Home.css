@@ -6,7 +6,9 @@
 }
 
 .home-nav {
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
     height: 68px;
     display: flex;
     align-items: center;

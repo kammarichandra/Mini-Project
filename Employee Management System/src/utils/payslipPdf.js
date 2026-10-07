@@ -22,27 +22,6 @@ function addRectangle(commands, x, y, width, height, color) {
   commands.push(`${color} rg ${x} ${y} ${width} ${height} re f`);
 }
 
-function addLogoBadge(commands) {
-  const x = 48;
-  const y = 685;
-  const size = 62;
-  const radius = 11;
-  const curve = radius * 0.5523;
-
-  commands.push(
-    `q 1 1 1 rg 0.76 0.86 0.97 RG 1.2 w ` +
-      `${x + radius} ${y} m ${x + size - radius} ${y} l ` +
-      `${x + size - radius + curve} ${y} ${x + size} ${y + radius - curve} ${x + size} ${y + radius} c ` +
-      `${x + size} ${y + size - radius} l ` +
-      `${x + size} ${y + size - radius + curve} ${x + size - radius + curve} ${y + size} ${x + size - radius} ${y + size} c ` +
-      `${x + radius} ${y + size} l ` +
-      `${x + radius - curve} ${y + size} ${x} ${y + size - radius + curve} ${x} ${y + size - radius} c ` +
-      `${x} ${y + radius} l ` +
-      `${x} ${y + radius - curve} ${x + radius - curve} ${y} ${x + radius} ${y} c B Q`
-  );
-  commands.push("q 48 0 0 48 55 692 cm /Im1 Do Q");
-}
-
 async function loadLogoAsJpeg() {
   const image = new Image();
   image.src = logoUrl;
@@ -63,21 +42,10 @@ async function loadLogoAsJpeg() {
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  const sourceHeight = image.naturalHeight * 0.68;
-  const scale = Math.min(canvas.width / image.naturalWidth, canvas.height / sourceHeight);
+  const scale = Math.min(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
   const width = image.naturalWidth * scale;
-  const height = sourceHeight * scale;
-  context.drawImage(
-    image,
-    0,
-    image.naturalHeight * 0.04,
-    image.naturalWidth,
-    sourceHeight,
-    (canvas.width - width) / 2,
-    (canvas.height - height) / 2,
-    width,
-    height
-  );
+  const height = image.naturalHeight * scale;
+  context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
 
   const jpegBlob = await new Promise((resolve, reject) => {
     canvas.toBlob(
@@ -148,61 +116,60 @@ function buildPdf(content, logoImage) {
 }
 
 export async function downloadPayslipPdf(employee, record, period) {
-  const netSalary = Math.max(Number(record.salary) - Number(record.deductions), 0);
+  const resolvedEmployee = employee || {};
+  const resolvedRecord = record || {};
+  const grossSalary = Math.max(Number(resolvedRecord.salary) || 0, 0);
+  const deductions = Math.max(Number(resolvedRecord.deductions) || 0, 0);
+  const netSalary = Math.max(grossSalary - deductions, 0);
   const formatAmount = (amount) =>
     `INR ${new Intl.NumberFormat("en-IN", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount)}`;
-  const [year, month] = period.split("-");
-  const periodLabel = new Date(Number(year), Number(month) - 1, 1).toLocaleDateString(
+  const periodLabel = new Date(`${period}-01T00:00:00`).toLocaleDateString(
     "en-IN",
     { month: "long", year: "numeric" }
   );
-  const processedDate = record.processedAt
-    ? new Date(record.processedAt).toLocaleDateString("en-IN")
-    : "Not processed";
+  const processedDate = resolvedRecord.processedAt
+    ? new Date(resolvedRecord.processedAt).toLocaleDateString("en-IN")
+    : "Pending";
   const commands = [];
 
-  addRectangle(commands, 0, 650, 612, 142, "0.03 0.17 0.35");
-  addRectangle(commands, 0, 646, 612, 4, "0.09 0.41 0.91");
-  addLogoBadge(commands);
-  addText(commands, "TeamSync", 126, 741, 12, "0.72 0.87 1");
-  addText(commands, "PAYSLIP", 126, 708, 23, "1 1 1");
-  addText(commands, periodLabel, 126, 684, 12, "0.82 0.89 0.97");
+  addRectangle(commands, 0, 0, 612, 792, "1 1 1");
+  addRectangle(commands, 35, 650, 540, 100, "0.96 0.97 0.99");
+  addRectangle(commands, 35, 647, 540, 3, "0.10 0.42 0.88");
+  commands.push("q 90 0 0 90 50 655 cm /Im1 Do Q");
+  addText(commands, "EMPLOYEE PAYSLIP", 170, 712, 20, "0.04 0.14 0.25");
+  addText(commands, `Pay period: ${periodLabel}`, 170, 686, 12, "0.30 0.36 0.43");
+  addText(commands, `Status: ${resolvedRecord.status || "Pending"}`, 170, 666, 10, "0.30 0.36 0.43");
 
-  addText(commands, "EMPLOYEE DETAILS", 48, 610, 10, "0.09 0.41 0.91");
-  addText(commands, "Employee", 48, 580, 9, "0.43 0.50 0.59");
-  addText(commands, employee.name, 48, 562, 13);
-  addText(commands, "Employee ID", 330, 580, 9, "0.43 0.50 0.59");
-  addText(commands, employee.id, 330, 562, 13);
-  addText(commands, "Department", 48, 530, 9, "0.43 0.50 0.59");
-  addText(commands, employee.department, 48, 512, 11);
-  addText(commands, "Status", 330, 530, 9, "0.43 0.50 0.59");
-  addText(commands, record.status, 330, 512, 11);
-  addLine(commands, 48, 488, 564, 488);
+  addRectangle(commands, 35, 575, 540, 52, "0.89 0.94 1");
+  addText(commands, "EMPLOYEE DETAILS", 52, 607, 10, "0.10 0.36 0.75");
+  addText(commands, `Employee: ${resolvedEmployee.name || "Not provided"}`, 52, 586, 11);
+  addText(commands, `Employee ID: ${resolvedEmployee.id || "Not provided"}`, 320, 586, 11);
+  addText(commands, `Department: ${resolvedEmployee.department || "Not provided"}`, 52, 559, 11);
+  addText(commands, `Designation: ${resolvedEmployee.designation || "Not provided"}`, 320, 559, 11);
+  addLine(commands, 35, 540, 575, 540);
 
-  addText(commands, "PAYMENT SUMMARY", 48, 458, 10, "0.09 0.41 0.91");
-  addText(commands, "Description", 48, 428, 9, "0.43 0.50 0.59");
-  addText(commands, "Amount", 442, 428, 9, "0.43 0.50 0.59");
-  addLine(commands, 48, 416, 564, 416);
+  addText(commands, "PAYMENT SUMMARY", 52, 510, 10, "0.10 0.36 0.75");
+  addText(commands, "Description", 52, 480, 10, "0.36 0.42 0.49");
+  addText(commands, "Amount", 450, 480, 10, "0.36 0.42 0.49");
+  addLine(commands, 52, 468, 560, 468);
+  addText(commands, "Gross salary", 52, 440, 12);
+  addText(commands, formatAmount(grossSalary), 450, 440, 12);
+  addLine(commands, 52, 424, 560, 424);
+  addText(commands, "Deductions", 52, 396, 12);
+  addText(commands, `- ${formatAmount(deductions)}`, 450, 396, 12);
+  addRectangle(commands, 35, 330, 540, 48, "0.89 0.94 1");
+  addText(commands, "NET SALARY", 52, 348, 12, "0.04 0.14 0.25");
+  addText(commands, formatAmount(netSalary), 420, 346, 16, "0.04 0.14 0.25");
 
-  addText(commands, "Basic salary", 48, 389, 11);
-  addText(commands, formatAmount(record.salary), 442, 389, 11);
-  addLine(commands, 48, 372, 564, 372);
-  addText(commands, "Deductions", 48, 347, 11);
-  addText(commands, `- ${formatAmount(record.deductions)}`, 442, 347, 11);
-  addLine(commands, 48, 330, 564, 330);
-  addRectangle(commands, 38, 268, 536, 48, "0.91 0.96 1");
-  addText(commands, "NET PAY", 54, 286, 11, "0.03 0.17 0.35");
-  addText(commands, formatAmount(netSalary), 414, 284, 16, "0.03 0.17 0.35");
+  addText(commands, `Processed on: ${processedDate}`, 52, 290, 10, "0.36 0.42 0.49");
+  addLine(commands, 52, 72, 560, 72);
+  addText(commands, "This payslip was generated by TeamSync.", 52, 52, 9, "0.36 0.42 0.49");
 
-  addText(commands, `Processed on: ${processedDate}`, 48, 226, 9, "0.43 0.50 0.59");
-  addLine(commands, 48, 72, 564, 72);
-  addText(commands, "This payslip was generated by TeamSync.", 48, 52, 9, "0.43 0.50 0.59");
-
-  const safeEmployeeId = String(employee.id).replace(/[^a-zA-Z0-9_-]/g, "_");
-  const safePeriod = period.replace(/[^0-9-]/g, "");
+  const safeEmployeeId = String(resolvedEmployee.id || "employee").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const safePeriod = String(period).replace(/[^0-9-]/g, "");
   const fileName = `payslip-${safeEmployeeId}-${safePeriod}.pdf`;
   const logoImage = await loadLogoAsJpeg();
   const downloadUrl = URL.createObjectURL(buildPdf(commands.join("\n"), logoImage));

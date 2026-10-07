@@ -1,13 +1,12 @@
 
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo1.png";
-import { getCurrentUser, getRoleHomePath, loginUser } from "../utils/auth";
+import { getCurrentUser, loginUser } from "../utils/auth";
 import "../Login.css";
 
 function Login({ onLogin }) {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +16,7 @@ function Login({ onLogin }) {
   useEffect(() => {
     const currentUser = getCurrentUser();
     if (currentUser) {
-      navigate(getRoleHomePath(currentUser.role), { replace: true });
+      navigate("/welcome", { replace: true });
     }
   }, [navigate]);
 
@@ -45,8 +44,7 @@ function Login({ onLogin }) {
       onLogin();
     }
 
-    const destination = location.state?.from;
-    navigate(destination || getRoleHomePath(user.role), { replace: true });
+    navigate("/welcome", { replace: true });
   };
 
   return (

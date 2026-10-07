@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { getCurrentUser, logoutUser } from "../utils/auth";
+import Notifications from "./Notifications";
 
 function Header({ onMenuToggle }) {
   const navigate = useNavigate();
@@ -22,9 +23,7 @@ function Header({ onMenuToggle }) {
       </label>
 
       <div className="header-user">
-        <button className="icon-button" type="button" aria-label="Notifications">
-          <i className="fa-regular fa-bell" aria-hidden="true"></i>
-        </button>
+        <Notifications user={user} />
         <div className="header-avatar">CS</div>
         <div className="header-user-copy">
           <strong>{user?.fullName || "User"}</strong>

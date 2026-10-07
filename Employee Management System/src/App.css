@@ -3008,7 +3008,6 @@ body {
 
 :root[data-theme="dark"] .theme-options {
   border-color: #35465c;
-  background: #111b29;
 }
 
 :root[data-theme="dark"] .theme-option.selected {

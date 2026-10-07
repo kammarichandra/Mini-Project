@@ -24,6 +24,15 @@ function formatCurrency(amount) {
   }).format(amount);
 }
 
+function formatPeriod(periodValue) {
+  const [year, month] = periodValue.split("-").map(Number);
+  if (!year || !month || month > 12) return periodValue;
+  return new Date(year, month - 1, 1).toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
+}
+
 function Payroll() {
   const currentUser = getCurrentUser();
   const role = normalizeRole(currentUser?.role);
@@ -61,12 +70,33 @@ function Payroll() {
     employee,
     ...getRecord(employee.id),
   }));
-  const processedCount = paySummaries.filter((record) => record.status === "Processed").length;
-  const pendingCount = paySummaries.filter((record) => record.status === "Pending").length;
-  const payrollTotal = paySummaries.reduce(
-    (total, record) => total + Math.max(record.salary - record.deductions, 0),
-    0
-  );
+  const employeePayslips = isEmployee
+    ? visibleEmployees.flatMap((employee) =>
+        Object.keys(payrollRecords)
+          .map((recordPeriod) => ({
+            employee,
+            period: recordPeriod,
+            ...getPayrollRecord(payrollRecords, recordPeriod, employee.id),
+          }))
+          .filter((record) => record.status === "Processed")
+      ).sort((first, second) => second.period.localeCompare(first.period))
+    : [];
+  const processedCount = isEmployee
+    ? employeePayslips.length
+    : paySummaries.filter((record) => record.status === "Processed").length;
+  const pendingCount = paySummaries.filter(
+    (record) =>
+      record.status === "Pending" && (!isEmployee || record.salary > 0)
+  ).length;
+  const payrollTotal = isEmployee
+    ? employeePayslips.reduce(
+        (total, record) => total + Math.max(record.salary - record.deductions, 0),
+        0
+      )
+    : paySummaries.reduce(
+        (total, record) => total + Math.max(record.salary - record.deductions, 0),
+        0
+      );
   const allVisibleSelected = filteredEmployees.length > 0 && filteredEmployees.every(
     (employee) => selectedIds.includes(String(employee.id))
   );
@@ -137,9 +167,8 @@ function Payroll() {
     setFeedback(`${eligibleIds.length} payroll record${eligibleIds.length === 1 ? "" : "s"} processed.`);
   };
 
-  const downloadStatement = (employee) => {
-    const record = getRecord(employee.id);
-    downloadPayslipPdf(employee, record, period).catch((error) => {
+  const downloadStatement = (employee, record = getRecord(employee.id), recordPeriod = period) => {
+    downloadPayslipPdf(employee, record, recordPeriod).catch((error) => {
       setFeedback(
         error instanceof Error ? error.message : "Unable to generate the payslip PDF."
       );
@@ -155,21 +184,77 @@ function Payroll() {
 
   return (
     <PageSurface
-      title="Payroll"
-      subtitle="Manage salaries, payslips and payment history."
+      title={isEmployee ? "My Payslips" : "Payroll"}
+      subtitle={isEmployee ? "View and download your processed payslips." : "Manage salaries, payslips and payment history."}
       icon="fa-credit-card"
       actionLabel={canManagePayroll ? "Process Payroll" : undefined}
       onAction={canManagePayroll ? processPayroll : undefined}
       stats={[
-        { label: isEmployee ? "Payslips" : "Total employees", value: isEmployee ? processedCount : visibleEmployees.length, note: isEmployee ? `Available for ${period}` : "From employee directory" },
-        { label: isEmployee ? "Processed payslips" : "Payroll processed", value: processedCount, note: `of ${visibleEmployees.length} employees` },
+        { label: isEmployee ? "Payslips" : "Total employees", value: isEmployee ? processedCount : visibleEmployees.length, note: isEmployee ? "Across all available periods" : "From employee directory" },
+        { label: isEmployee ? "Processed payslips" : "Payroll processed", value: processedCount, note: isEmployee ? "Ready to download" : `of ${visibleEmployees.length} employees` },
         { label: "Pending payments", value: pendingCount, note: `For ${period}`, tone: "warning" },
-        { label: "Total payroll", value: formatCurrency(payrollTotal), note: `Net amount for ${period}` },
+        { label: isEmployee ? "Total net paid" : "Total payroll", value: formatCurrency(payrollTotal), note: isEmployee ? "Across all payslips" : `Net amount for ${period}` },
       ]}
     >
 
       {/* Main Content */}
       <section className="workspace-panel workspace-panel-wide payroll-directory">
+        {isEmployee ? (
+          <section className="table-container">
+            <div className="panel-heading">
+              <h2>Payslip history</h2>
+              <span>{employeePayslips.length} payslip{employeePayslips.length === 1 ? "" : "s"}</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Pay period</th>
+                  <th>Basic salary</th>
+                  <th>Deductions</th>
+                  <th>Net salary</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {employeePayslips.length === 0 ? (
+                  <tr><td className="empty-state" colSpan="7">
+                    {visibleEmployees.length
+                      ? "No processed payslips are available yet."
+                      : "No payslip profile is linked to this account yet."}
+                  </td></tr>
+                ) : employeePayslips.map((payslip, index) => (
+                  <tr key={`${payslip.employee.id}-${payslip.period}`}>
+                    <td>{index + 1}</td>
+                    <td>{formatPeriod(payslip.period)}</td>
+                    <td>{formatCurrency(payslip.salary)}</td>
+                    <td>{formatCurrency(payslip.deductions)}</td>
+                    <td>{formatCurrency(Math.max(payslip.salary - payslip.deductions, 0))}</td>
+                    <td><span className="status processed">{payslip.status}</span></td>
+                    <td>
+                      <div className="actions">
+                        <button
+                          type="button"
+                          title="Download payslip"
+                          aria-label={`Download ${payslip.employee.name}'s ${formatPeriod(payslip.period)} payslip`}
+                          onClick={() => downloadStatement(payslip.employee, payslip, payslip.period)}
+                        >
+                          <i className="fa-solid fa-download" aria-hidden="true"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="table-footer">
+              <span>Showing {employeePayslips.length} of {employeePayslips.length} payslips</span>
+              {feedback && <span className="payroll-feedback" role="status">{feedback}</span>}
+            </div>
+          </section>
+        ) : (
+          <>
 
         {/* Filters */}
         <section className="filter-box">
@@ -323,6 +408,8 @@ function Payroll() {
           </div>
 
         </section>
+          </>
+        )}
 
       </section>
 

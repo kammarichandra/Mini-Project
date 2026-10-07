@@ -25,28 +25,40 @@ const roleAccess = {
     "/payroll",
   ],
   Manager: [
+    "/dashboard",
     "/employees",
     "/attendance",
     "/leave_management",
     "/performance",
   ],
   Employee: [
+    "/dashboard",
     "/employees",
+    "/settings",
     "/attendance",
     "/leave_management",
     "/payroll",
   ],
-  Finance: ["/payroll", "/reports"],
-  Recruiter: ["/candidates", "/interviews", "/hiring"],
+  Finance: [
+    "/dashboard",
+    "/payroll",
+    "/reports",
+  ],
+  Recruiter: [
+    "/dashboard",
+    "/candidates",
+    "/interviews",
+    "/hiring",
+  ],
 };
 
 const roleHomePaths = {
   "Super Admin": "/dashboard",
   "HR Admin": "/dashboard",
-  Manager: "/Employees",
-  Employee: "/Employees",
-  Finance: "/Payroll",
-  Recruiter: "/Candidates",
+  Manager: "/dashboard",
+  Employee: "/dashboard",
+  Finance: "/dashboard",
+  Recruiter: "/dashboard",
 };
 
 export function normalizeRole(role) {
