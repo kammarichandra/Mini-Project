@@ -338,11 +338,11 @@
 }
 
 .payroll-page tbody tr {
-  transition: 0.2s;
+  transition: filter 0.2s ease;
 }
 
 .payroll-page tbody tr:hover {
-  background: #f7fbff;
+  filter: brightness(0.97);
 }
 
 .payroll-page tbody tr:last-child td {
@@ -408,39 +408,6 @@
 
   font-size: 15px;
   font-weight: 700;
-}
-
-.avatar-0 {
-  color: #006eff;
-
-  background:
-    linear-gradient(
-      135deg,
-      #e4f2ff,
-      #d7ebff
-    );
-}
-
-.avatar-1 {
-  color: #d52b91;
-
-  background:
-    linear-gradient(
-      135deg,
-      #ffe8f6,
-      #ffdef1
-    );
-}
-
-.avatar-2 {
-  color: #07984d;
-
-  background:
-    linear-gradient(
-      135deg,
-      #e3faeb,
-      #d5f5e1
-    );
 }
 
 /* =====================================================

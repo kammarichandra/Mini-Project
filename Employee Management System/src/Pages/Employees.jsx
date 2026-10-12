@@ -5,8 +5,10 @@ import { getDummyEmployees } from "../Apis/dummyEmployees";
 import { getCurrentUser, normalizeRole } from "../utils/auth";
 import {
   createEmployeeId,
+  getDepartmentAvatarStyle,
   getEmployeeInitials,
   getEmployeesFromStorage,
+  getDepartmentRowStyle,
   saveEmployeesToStorage,
 } from "../utils/employees";
 
@@ -361,7 +363,10 @@ function Employees() {
               ) : (
                 filteredEmployees.map((employee, index) => (
 
-                <tr key={employee.id}>
+                <tr
+                  key={employee.id}
+                  style={getDepartmentRowStyle(employee.department)}
+                >
 
                   <td>
                     {canManageEmployees && (
@@ -380,7 +385,8 @@ function Employees() {
                     <div className="employee-name">
 
                       <div
-                        className={`employee-avatar ${employee.color}`}
+                        className="employee-avatar"
+                        style={getDepartmentAvatarStyle(employee.department)}
                       >
                         {employee.initials}
                       </div>

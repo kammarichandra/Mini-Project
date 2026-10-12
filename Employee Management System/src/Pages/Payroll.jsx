@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "../Payroll.css";
 import PageSurface from "../Components/PageSurface";
-import { getEmployeesFromStorage } from "../utils/employees";
+import {
+  getDepartmentAvatarStyle,
+  getDepartmentRowStyle,
+  getEmployeesFromStorage,
+} from "../utils/employees";
 import { downloadPayslipPdf } from "../utils/payslipPdf";
 import { getCurrentUser, normalizeRole } from "../utils/auth";
 import {
@@ -225,7 +229,10 @@ function Payroll() {
                       : "No payslip profile is linked to this account yet."}
                   </td></tr>
                 ) : employeePayslips.map((payslip, index) => (
-                  <tr key={`${payslip.employee.id}-${payslip.period}`}>
+                  <tr
+                    key={`${payslip.employee.id}-${payslip.period}`}
+                    style={getDepartmentRowStyle(payslip.employee.department)}
+                  >
                     <td>{index + 1}</td>
                     <td>{formatPeriod(payslip.period)}</td>
                     <td>{formatCurrency(payslip.salary)}</td>
@@ -336,7 +343,10 @@ function Payroll() {
               </td></tr> : filteredEmployees.map((employee, index) => {
                 const record = getRecord(employee.id);
                 const netSalary = Math.max(record.salary - record.deductions, 0);
-                return <tr key={employee.id}>
+                return <tr
+                  key={employee.id}
+                  style={getDepartmentRowStyle(employee.department)}
+                >
 
                   <td>
                     {canManagePayroll && <input type="checkbox" checked={selectedIds.includes(String(employee.id))} onChange={() => setSelectedIds((current) => current.includes(String(employee.id)) ? current.filter((id) => id !== String(employee.id)) : [...current, String(employee.id)])} aria-label={`Select ${employee.name} for payroll`} />}
@@ -347,7 +357,10 @@ function Payroll() {
                   <td>
                     <div className="employee-info">
 
-                      <div className={`avatar avatar-${index % 5}`}>
+                      <div
+                        className="avatar"
+                        style={getDepartmentAvatarStyle(employee.department)}
+                      >
                         {employee.initials}
                       </div>
 

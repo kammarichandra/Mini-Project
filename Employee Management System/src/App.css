@@ -1061,6 +1061,14 @@ body {
   font-size: 14px;
 }
 
+.employee-page tbody tr {
+  transition: filter 0.2s ease;
+}
+
+.employee-page tbody tr:hover {
+  filter: brightness(0.97);
+}
+
 .employee-page .empty-state {
   height: 110px;
   color: #6b809f;
