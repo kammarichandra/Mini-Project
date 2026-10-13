@@ -85,6 +85,20 @@ function Payroll() {
           .filter((record) => record.status === "Processed")
       ).sort((first, second) => second.period.localeCompare(first.period))
     : [];
+  const adminPayslips = canManagePayroll
+    ? employees.flatMap((employee) =>
+        Object.keys(payrollRecords)
+          .map((recordPeriod) => ({
+            employee,
+            period: recordPeriod,
+            ...getPayrollRecord(payrollRecords, recordPeriod, employee.id),
+          }))
+          .filter((record) => record.status === "Processed")
+      ).sort((first, second) =>
+        second.period.localeCompare(first.period) ||
+        first.employee.name.localeCompare(second.employee.name)
+      )
+    : [];
   const processedCount = isEmployee
     ? employeePayslips.length
     : paySummaries.filter((record) => record.status === "Processed").length;
@@ -188,6 +202,7 @@ function Payroll() {
 
   return (
     <PageSurface
+      className="payroll-page"
       title={isEmployee ? "My Payslips" : "Payroll"}
       subtitle={isEmployee ? "View and download your processed payslips." : "Manage salaries, payslips and payment history."}
       icon="fa-credit-card"
@@ -204,15 +219,15 @@ function Payroll() {
       {/* Main Content */}
       <section className="workspace-panel workspace-panel-wide payroll-directory">
         {isEmployee ? (
-          <section className="table-container">
+          <section className="table-container payslip-history-panel">
             <div className="panel-heading">
-              <h2>Payslip history</h2>
-              <span>{employeePayslips.length} payslip{employeePayslips.length === 1 ? "" : "s"}</span>
+              <h2 className="payslip">Payslip history</h2>
+              <span className="view">{employeePayslips.length} payslip{employeePayslips.length === 1 ? "" : "s"}</span>
             </div>
-            <table>
+            <table className="payslip-history-table">
               <thead>
                 <tr>
-                  <th>#</th>
+                  <th>Emp Id</th>
                   <th>Pay period</th>
                   <th>Basic salary</th>
                   <th>Deductions</th>
@@ -322,7 +337,7 @@ function Payroll() {
             <thead>
               <tr>
                 <th>{canManagePayroll && <input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} aria-label="Select all visible employees" />}</th>
-                <th>#</th>
+                <th>Emp Id</th>
                 <th>Employee</th>
                 <th>Department</th>
                 <th>Basic Salary</th>
@@ -421,6 +436,7 @@ function Payroll() {
           </div>
 
         </section>
+
           </>
         )}
 

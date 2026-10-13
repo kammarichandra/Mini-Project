@@ -105,12 +105,12 @@ function Dashboard() {
           { label: "Status", value: employee?.status || "Profile pending", note: "Employment status" },
         ]}
       >
-        <section className="workspace-panel">
+        <section className="workspace-panel employee-profile-panel">
           <div className="panel-heading">
             <h2>My profile</h2>
             <span>{employee?.status || "Profile pending"}</span>
           </div>
-          <div className="profile-summary">
+          <div className="profile-summary employee-profile-summary">
             <div className="large-avatar">{initials}</div>
             <div>
               <strong>{displayName}</strong>

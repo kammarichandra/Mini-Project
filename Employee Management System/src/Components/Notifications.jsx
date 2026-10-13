@@ -137,9 +137,31 @@ function getStoredNotificationIds(storageKey, user) {
   }
 }
 
+function getNotificationsPreference(user) {
+  const email = user?.email?.toLowerCase();
+  const storageKey = normalizeRole(user?.role) === "Employee"
+    ? `employeeManagementEmployeeSettings:${email || "unknown"}`
+    : "employeeManagementDashboardSettings";
+
+  try {
+    const savedSettings = JSON.parse(
+      window.localStorage.getItem(storageKey) || "null"
+    );
+
+    if (savedSettings && typeof savedSettings === "object") {
+      return savedSettings.notificationsEnabled !== false;
+    }
+  } catch {
+    return true;
+  }
+
+  return true;
+}
+
 function Notifications({ user }) {
   const navigate = useNavigate();
   const containerRef = useRef(null);
+  const notificationsEnabled = getNotificationsPreference(user);
   const [isOpen, setIsOpen] = useState(false);
   const [clearedIds, setClearedIds] = useState(() =>
     getStoredNotificationIds(clearedNotificationsKey, user)
@@ -224,6 +246,10 @@ function Notifications({ user }) {
     setIsOpen(false);
     navigate(notice.path);
   };
+
+  if (!notificationsEnabled) {
+    return null;
+  }
 
   return (
     <div className="notification-center" ref={containerRef}>

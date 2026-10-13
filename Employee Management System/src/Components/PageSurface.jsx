@@ -1,6 +1,6 @@
-function PageSurface({ title, subtitle, icon, stats, children, actionLabel, onAction }) {
+function PageSurface({ title, subtitle, icon, stats, children, actionLabel, onAction, className = "" }) {
   return (
-    <div className="workspace-page">
+    <div className={`workspace-page ${className}`.trim()}>
       <div className="workspace-heading">
         <div className="workspace-title-wrap">
           <div className="workspace-icon" aria-hidden="true">

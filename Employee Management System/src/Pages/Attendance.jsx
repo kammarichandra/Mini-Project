@@ -140,6 +140,7 @@ function Attendance() {
 
   return (
     <PageSurface
+      className="attendance-page"
       title="Attendance"
       subtitle="Monitor daily presence and attendance trends."
       icon="fa-calendar-check"
@@ -152,29 +153,52 @@ function Attendance() {
         { label: "Attendance rate", value: `${attendanceRate}%`, note: "Present or late" },
       ]}
     >
-      <section className="workspace-panel workspace-panel-wide">
+      <section className="workspace-panel workspace-panel-wide attendance-main-panel">
         <div className="panel-heading">
-          <h2>Today&apos;s attendance</h2><span>{todayLabel}</span>
+          <h2><i className="fa-solid fa-users" aria-hidden="true"></i>Today&apos;s attendance</h2>
+          <span className="attendance-date"><i className="fa-regular fa-calendar" aria-hidden="true"></i>{todayLabel}</span>
         </div>
-        <div className="progress-summary">
-          <strong>{attendanceRate}%</strong>
+        {/* <div className="progress-summary attendance-progress">
+          <strong>{attendanceRate}<small>%</small></strong>
           <div>
-            <div className="wide-progress"><span style={{ width: `${attendanceRate}%` }}></span></div>
-            <small>{presentCount} of {activeEmployees.length} active employees present</small>
+            <div
+              className="wide-progress"
+              role="progressbar"
+              aria-label="Today's attendance rate"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow={attendanceRate}
+            >
+              <span style={{ width: `${attendanceRate}%` }}></span>
+            </div>
+            <small>{presentCount} of {activeEmployees.length} active employees present today</small>
           </div>
-        </div>
+        </div> */}
         {visibleEmployees.length ? <div className="mini-table attendance-table">
-          <div><b>Employee</b><b>Department</b><b>Check-in</b><b>Status</b></div>
+          <div className="attendance-table-head"><b>Employee</b><b>Department</b><b>Check-in</b><b>Status</b></div>
           {visibleEmployees.map((employee) => {
             const record = todayRecords[employee.id];
             const status = employee.status === "On Leave"
               ? "On leave"
               : record?.status || "Not marked";
-            return <div key={employee.id}>
-              <span>{employee.name}</span>
-              <span>{employee.department}</span>
-              <span>{record?.checkIn || "--"}</span>
+            const initials = employee.name
+              .split(/\s+/)
+              .map((part) => part[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase();
+            return <div className="attendance-table-row" key={employee.id}>
+              <span className="attendance-employee">
+                <span className="attendance-avatar" aria-hidden="true">{initials}</span>
+                <span>{employee.name}<small>{employee.id}</small></span>
+              </span>
+              <span className="attendance-department">{employee.department}</span>
+              <span className="attendance-checkin">
+                <i className="fa-regular fa-clock" aria-hidden="true"></i>
+                {record?.checkIn || "Not checked in"}
+              </span>
               <select
+                className={`attendance-status attendance-status-${status.toLowerCase().replaceAll(" ", "-")}`}
                 aria-label={`Attendance status for ${employee.name}`}
                 value={status}
                 disabled={employee.status === "On Leave"}
@@ -193,9 +217,24 @@ function Attendance() {
               : <>No employee records yet. <Link to="/Employees">Open the employee directory</Link> to add your team.</>}
         </p>}
       </section>
-      <section className="workspace-panel">
-        <div className="panel-heading"><h2>Weekly trend</h2></div>
-        <div className="trend-bars">{getWeeklyTrend().map((day) => <div key={day.date} title={`${day.rate}% present`}><span style={{ height: `${Math.max(day.rate, 3)}%` }}></span><small>{day.label}</small></div>)}</div>
+      <section className="workspace-panel attendance-trend-panel">
+        <div className="panel-heading">
+          <h2><i className="fa-solid fa-chart-column" aria-hidden="true"></i>Weekly trend</h2>
+          <span>Last 7 days</span>
+        </div>
+        <div className="trend-bars attendance-trend-bars">
+          {getWeeklyTrend().map((day) => (
+            <div key={day.date} title={`${day.rate}% present`}>
+              <small className="attendance-trend-rate">{day.rate}%</small>
+              <span style={{ height: `${Math.max(day.rate, 3)}%` }}></span>
+              <small className="attendance-trend-day">{day.label}</small>
+            </div>
+          ))}
+        </div>
+        <div className="attendance-trend-legend">
+          <span><i aria-hidden="true"></i>Present or late</span>
+          <span>Daily attendance rate</span>
+        </div>
       </section>
     </PageSurface>
   );

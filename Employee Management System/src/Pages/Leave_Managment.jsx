@@ -48,10 +48,8 @@ function Leave_Managment() {
   const canReview = ["Super Admin", "HR Admin", "Manager"].includes(role);
   const [requests, setRequests] = useState(getLeaveRequests);
   const [showForm, setShowForm] = useState(false);
-  const [requestForm, setRequestForm] = useState(() => ({
-    ...emptyRequest,
-    name: isEmployee ? currentUser?.fullName || "" : "",
-  }));
+  const [requestForm, setRequestForm] = useState(() => ({ ...emptyRequest,name: isEmployee ? currentUser?.fullName || "" : "", }));
+  
   const [formError, setFormError] = useState("");
   const teamEmails = getEmployeesFromStorage()
     .filter(

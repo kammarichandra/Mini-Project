@@ -1,9 +1,23 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo1.png";
+import { getCurrentUser, getRoleHomePath } from "../utils/auth";
 import "../Home.css";
 
 function Home() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+
+    if (currentUser) {
+      navigate(getRoleHomePath(currentUser.role), { replace: true });
+    }
+  }, [navigate]);
+
+  if (getCurrentUser()) {
+    return null;
+  }
 
   return (
     <div className="teamsync-home">
@@ -36,7 +50,7 @@ function Home() {
             <div className="photo-badge photo-brand"><img src={logo} alt="" /><span><strong>TeamSync</strong><small>People-first HR</small></span></div>
             <div className="photo-badge team-count"><strong>✓ &nbsp;128 team members</strong><small>Connected and growing</small></div>
           </div>
-        </section>
+        </section><br />
 
         <section className="feature-strip" id="features">
           {[['fa-user-group', 'Employee Management'], ['fa-calendar-check', 'Leave & Attendance'], ['fa-bullseye', 'Performance Tracking'], ['fa-shield-halved', 'Secure & Scalable']].map(([icon, title]) => <div className="strip-item" key={title}><span><i className={`fa-solid ${icon}`}></i></span><div><strong>{title}</strong><small>Simple and efficient</small></div></div>)}
