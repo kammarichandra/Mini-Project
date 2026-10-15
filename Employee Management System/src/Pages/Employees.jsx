@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Modal from "../Components/Common/Modal";
 import PageSurface from "../Components/PageSurface";
 import { getDummyEmployees } from "../Apis/dummyEmployees";
 import { getCurrentUser, normalizeRole } from "../utils/auth";
+import { getEmployeesOnLeave } from "../utils/leave";
 import {
   createEmployeeId,
   getDepartmentAvatarStyle,
@@ -39,14 +41,18 @@ function Employees() {
   const canManageEmployees = ["Super Admin", "HR Admin"].includes(role);
   const isEmployee = role === "Employee";
   const isManager = role === "Manager";
+  const [searchParams, setSearchParams] = useSearchParams();
   const [employees, setEmployees] = useState(getEmployeesFromStorage);
   const [loading, setLoading] = useState(
     () => getEmployeesFromStorage().length === 0
   );
   const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
-  const [department, setDepartment] = useState("All Departments");
-  const [status, setStatus] = useState("All Status");
+  const department = searchParams.get("department") || "All Departments";
+  const requestedStatus = searchParams.get("status");
+  const status = ["Active", "On Leave", "Other"].includes(requestedStatus)
+    ? requestedStatus
+    : "All Status";
   const [selectedIds, setSelectedIds] = useState([]);
   const [modalMode, setModalMode] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -92,6 +98,12 @@ function Employees() {
             currentUser?.email?.toLowerCase()
         )
       : employees;
+  const departmentOptions = [
+    ...new Set([
+      ...departments,
+      ...employees.map((employee) => employee.department.trim() || "Unassigned"),
+    ]),
+  ];
   const profileEmployees =
     isEmployee && visibleEmployees.length === 0
       ? [{
@@ -105,6 +117,10 @@ function Employees() {
           color: "blue",
         }]
       : visibleEmployees;
+  const employeesCurrentlyOnLeave = getEmployeesOnLeave(profileEmployees);
+  const employeesCurrentlyOnLeaveIds = new Set(
+    employeesCurrentlyOnLeave.map((employee) => String(employee.id))
+  );
 
   const filteredEmployees = profileEmployees.filter((employee) => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -117,21 +133,29 @@ function Employees() {
 
     const departmentMatch =
       department === "All Departments" ||
-      employee.department === department;
+      (employee.department.trim() || "Unassigned") === department;
 
+    const isCurrentlyOnLeave = employeesCurrentlyOnLeaveIds.has(String(employee.id));
     const statusMatch =
-      status === "All Status" || employee.status === status;
+      status === "All Status" ||
+      (status === "On Leave"
+        ? isCurrentlyOnLeave
+        : status === "Other"
+          ? employee.status !== "Active" &&
+            employee.status !== "On Leave" &&
+            !isCurrentlyOnLeave
+          : employee.status === status && !isCurrentlyOnLeave);
 
     return searchMatch && departmentMatch && statusMatch;
   });
 
   const totalEmployees = profileEmployees.length;
   const activeEmployees = profileEmployees.filter(
-    (employee) => employee.status === "Active"
+    (employee) =>
+      employee.status === "Active" &&
+      !employeesCurrentlyOnLeaveIds.has(String(employee.id))
   ).length;
-  const employeesOnLeave = profileEmployees.filter(
-    (employee) => employee.status === "On Leave"
-  ).length;
+  const employeesOnLeave = employeesCurrentlyOnLeave.length;
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
@@ -234,8 +258,7 @@ function Employees() {
 
   const clearFilters = () => {
     setSearch("");
-    setDepartment("All Departments");
-    setStatus("All Status");
+    setSearchParams({});
   };
 
   return (
@@ -282,10 +305,18 @@ function Employees() {
 
           <select
             value={department}
-            onChange={(e) => setDepartment(e.target.value)}
+            onChange={(event) => {
+              const nextParams = new URLSearchParams(searchParams);
+              if (event.target.value === "All Departments") {
+                nextParams.delete("department");
+              } else {
+                nextParams.set("department", event.target.value);
+              }
+              setSearchParams(nextParams);
+            }}
           >
             <option>All Departments</option>
-            {departments.map((departmentOption) => (
+            {departmentOptions.map((departmentOption) => (
               <option key={departmentOption}>{departmentOption}</option>
             ))}
           </select>
@@ -293,11 +324,20 @@ function Employees() {
 
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(event) => {
+              const nextParams = new URLSearchParams(searchParams);
+              if (event.target.value === "All Status") {
+                nextParams.delete("status");
+              } else {
+                nextParams.set("status", event.target.value);
+              }
+              setSearchParams(nextParams);
+            }}
           >
             <option>All Status</option>
             <option>Active</option>
             <option>On Leave</option>
+            <option>Other</option>
           </select>
 
 

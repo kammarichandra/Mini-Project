@@ -2,13 +2,10 @@ import { useEffect, useState } from "react";
 import PageSurface from "../Components/PageSurface";
 import { getCurrentUser, normalizeRole } from "../utils/auth";
 import { getEmployeesFromStorage } from "../utils/employees";
-
-const leaveStorageKey = "employeeManagementDashboardLeaveRequests";
-const initialRequests = [
-  { id: "leave-1", name: "Priya Shah", type: "Annual leave", startDate: "2026-10-12", endDate: "2026-10-14", status: "Pending" },
-  { id: "leave-2", name: "Arun Kumar", type: "Personal leave", startDate: "2026-10-05", endDate: "2026-10-05", status: "Approved" },
-  { id: "leave-3", name: "Meera Joshi", type: "Sick leave", startDate: "2026-10-19", endDate: "2026-10-20", status: "Pending" },
-];
+import {
+  getLeaveRequests,
+  saveLeaveRequestsToStorage,
+} from "../utils/leave";
 
 const emptyRequest = {
   name: "",
@@ -16,18 +13,6 @@ const emptyRequest = {
   startDate: "",
   endDate: "",
 };
-
-function getLeaveRequests() {
-  try {
-    const savedRequests = JSON.parse(
-      window.localStorage.getItem(leaveStorageKey) || "null"
-    );
-
-    return Array.isArray(savedRequests) ? savedRequests : initialRequests;
-  } catch {
-    return initialRequests;
-  }
-}
 
 function formatDate(date) {
   return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
@@ -71,11 +56,7 @@ function Leave_Managment() {
       : requests;
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(leaveStorageKey, JSON.stringify(requests));
-    } catch {
-      return;
-    }
+    saveLeaveRequestsToStorage(requests);
   }, [requests]);
 
   const pendingCount = visibleRequests.filter((request) => request.status === "Pending").length;

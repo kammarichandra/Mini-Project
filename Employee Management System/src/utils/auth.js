@@ -43,12 +43,14 @@ const roleAccess = {
     "/dashboard",
     "/payroll",
     "/reports",
+    "/attendance",
   ],
   Recruiter: [
     "/dashboard",
     "/candidates",
     "/interviews",
     "/hiring",
+    "/attendance",
   ],
 };
 

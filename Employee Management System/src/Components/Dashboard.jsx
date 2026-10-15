@@ -10,6 +10,7 @@ import {
   saveEmployeesToStorage,
 } from "../utils/employees";
 import { getCurrentUser, normalizeRole } from "../utils/auth";
+import { getEmployeesOnLeave } from "../utils/leave";
 
 function Dashboard() {
   const currentUser = getCurrentUser();
@@ -54,12 +55,14 @@ function Dashboard() {
     setShowModal(false);
   };
 
+  const employeesCurrentlyOnLeave = getEmployeesOnLeave(employees);
+  const employeesOnLeaveIds = new Set(
+    employeesCurrentlyOnLeave.map((employee) => String(employee.id))
+  );
   const activeEmployees = employees.filter(
-    (employee) => employee.status === "Active"
+    (employee) => employee.status === "Active" && !employeesOnLeaveIds.has(String(employee.id))
   ).length;
-  const employeesOnLeave = employees.filter(
-    (employee) => employee.status === "On Leave"
-  ).length;
+  const employeesOnLeave = employeesCurrentlyOnLeave.length;
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
@@ -68,6 +71,15 @@ function Dashboard() {
     return !Number.isNaN(addedAt.getTime()) && addedAt >= monthStart;
   }).length;
   const recentEmployees = employees.slice(-4).reverse();
+  const departmentCounts = employees.reduce((counts, employee) => {
+    const departmentName = employee.department.trim() || "Unassigned";
+    counts[departmentName] = (counts[departmentName] || 0) + 1;
+    return counts;
+  }, {});
+  const topDepartments = Object.entries(departmentCounts)
+    .sort((first, second) => second[1] - first[1])
+    .slice(0, 3);
+  const otherEmployees = employees.length - activeEmployees - employeesOnLeave;
   const months = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
@@ -182,12 +194,71 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="card attendance-card">
+        <div className="card team-pulse-card">
           <div className="card-header">
-            <h3>Employee Attendance</h3>
+            <h3>Team Pulse</h3>
+            <span className="team-pulse-live"><span></span>Live overview</span>
           </div>
-          <div className="attendance-content">
-            <span>No attendance data available.</span>
+          <div className="team-pulse-hero">
+            <div className="team-pulse-icon"><i className="fa-solid fa-users"></i></div>
+            <div>
+              <strong>{employees.length}</strong>
+              <span>people on your team</span>
+            </div>
+            <div className="team-pulse-departments">
+              <strong>{Object.keys(departmentCounts).length}</strong>
+              <span>departments</span>
+            </div>
+          </div>
+          <div className="team-pulse-section">
+            <div className="team-pulse-section-heading">
+              <strong>Workforce status</strong>
+              <span>{employees.length ? "Current team" : "No team data yet"}</span>
+            </div>
+            <div className="team-pulse-status-bar" aria-label="Workforce status breakdown">
+              {employees.length > 0 && (
+                <>
+                  <span className="team-pulse-status-active" style={{ width: `${(activeEmployees / employees.length) * 100}%` }}></span>
+                  <span className="team-pulse-status-leave" style={{ width: `${(employeesOnLeave / employees.length) * 100}%` }}></span>
+                  <span className="team-pulse-status-other" style={{ width: `${(otherEmployees / employees.length) * 100}%` }}></span>
+                </>
+              )}
+            </div>
+            <div className="team-pulse-legend">
+              <Link to="/Employees?status=Active" aria-label={`View ${activeEmployees} active employees`}>
+                <i className="team-pulse-status-active"></i>Active <b>{activeEmployees}</b>
+              </Link>
+              <Link to="/Employees?status=On%20Leave" aria-label={`View ${employeesOnLeave} employees on leave`}>
+                <i className="team-pulse-status-leave"></i>On leave <b>{employeesOnLeave}</b>
+              </Link>
+              <Link to="/Employees?status=Other" aria-label={`View ${otherEmployees} employees with other statuses`}>
+                <i className="team-pulse-status-other"></i>Other <b>{otherEmployees}</b>
+              </Link>
+            </div>
+          </div>
+          <div className="team-pulse-section team-pulse-department-list">
+            <div className="team-pulse-section-heading">
+              <strong>Top departments</strong>
+              <Link to="/Employees">View team <i className="fa-solid fa-arrow-right"></i></Link>
+            </div>
+            {topDepartments.length ? topDepartments.map(([departmentName, count], index) => (
+              <Link
+                className="team-pulse-department"
+                key={departmentName}
+                to={`/Employees?department=${encodeURIComponent(departmentName)}`}
+                aria-label={`View ${count} employees in ${departmentName}`}
+              >
+                <div className="team-pulse-department-label">
+                  <span><i className={`team-pulse-department-dot team-pulse-department-dot-${index}`}></i>{departmentName}</span>
+                  <b>{count}</b>
+                </div>
+                <div className="team-pulse-department-track">
+                  <span className={`team-pulse-department-fill team-pulse-department-fill-${index}`} style={{ width: `${(count / employees.length) * 100}%` }}></span>
+                </div>
+              </Link>
+            )) : (
+              <p className="team-pulse-empty">Add employees to see your department breakdown.</p>
+            )}
           </div>
         </div>
       </div>
