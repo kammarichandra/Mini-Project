@@ -2281,6 +2281,75 @@ body {
   font-size: 10px;
 }
 
+.leave-balance-panel {
+  align-self: start;
+}
+
+.leave-balance-panel .panel-heading {
+  margin-bottom: 10px;
+}
+
+.leave-balance-ring {
+  border: 10px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    conic-gradient(
+      #1ec5b0 var(--leave-used-percent),
+      #dce8f2 var(--leave-used-percent)
+    ) border-box;
+}
+
+.leave-balance-caption {
+  margin: -10px 0 18px;
+  color: #8497ad;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.leave-balance-breakdown {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid #e8eef5;
+}
+
+.leave-balance-breakdown > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #6f849c;
+  font-size: 11px;
+}
+
+.leave-balance-breakdown strong {
+  color: #294b70;
+  font-size: 12px;
+}
+
+.leave-balance-warning {
+  margin: 14px 0 0;
+  color: #c2413b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.upcoming-leave-date {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 10px;
+  background: #eaf4ff;
+  color: #247ee1;
+}
+
+.upcoming-leave-panel .request-row:last-child {
+  border-bottom: 0;
+}
+
 .metric-row {
   margin-bottom: 20px;
 }
@@ -3315,6 +3384,35 @@ body {
   font-size: 14px;
 }
 
+.employee-profile-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.employee-profile-detail {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #e1ebf5;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.employee-profile-detail span {
+  color: #8296ae;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.employee-profile-detail strong {
+  overflow-wrap: anywhere;
+  color: #17365c;
+  font-size: 13px;
+}
+
 .employee-profile-panel .panel-note {
   margin-top: 18px;
   padding-top: 14px;
@@ -3398,6 +3496,19 @@ body {
 }
 
 :root[data-theme="dark"] .employee-profile-summary strong {
+  color: #e2eaf4;
+}
+
+:root[data-theme="dark"] .employee-profile-detail {
+  border-color: #2b3b50;
+  background: rgba(15, 27, 42, 0.62);
+}
+
+:root[data-theme="dark"] .employee-profile-detail span {
+  color: #9eafc4;
+}
+
+:root[data-theme="dark"] .employee-profile-detail strong {
   color: #e2eaf4;
 }
 
@@ -4444,6 +4555,36 @@ body {
   border-color: #354760;
   background: #0f1a2a;
   color: #dce7f5;
+}
+
+:root[data-theme="dark"] .leave-balance-ring {
+  background:
+    linear-gradient(#192433, #192433) padding-box,
+    conic-gradient(
+      #1ec5b0 var(--leave-used-percent),
+      #34475e var(--leave-used-percent)
+    ) border-box;
+}
+
+:root[data-theme="dark"] .leave-balance-caption {
+  color: #9eafc4;
+}
+
+:root[data-theme="dark"] .leave-balance-breakdown {
+  border-top-color: #29394e;
+}
+
+:root[data-theme="dark"] .leave-balance-breakdown > div {
+  color: #9eafc4;
+}
+
+:root[data-theme="dark"] .leave-balance-breakdown strong {
+  color: #dce7f5;
+}
+
+:root[data-theme="dark"] .upcoming-leave-date {
+  background: #203954;
+  color: #91c6ff;
 }
 
 :root[data-theme="dark"] .modal-content {

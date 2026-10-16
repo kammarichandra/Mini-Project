@@ -104,6 +104,15 @@ function Dashboard() {
     );
     const displayName = employee?.name || currentUser?.fullName || "Employee";
     const initials = getEmployeeInitials(displayName);
+    const addedAt = employee?.addedAt ? new Date(employee.addedAt) : null;
+    const joinedDate =
+      addedAt && !Number.isNaN(addedAt.getTime())
+        ? addedAt.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })
+        : "Not available";
 
     return (
       <PageSurface
@@ -127,6 +136,24 @@ function Dashboard() {
             <div>
               <strong>{displayName}</strong>
               <p>{currentUser?.email || "No email on file"}</p>
+            </div>
+          </div>
+          <div className="employee-profile-details">
+            <div className="employee-profile-detail">
+              <span>Employee ID</span>
+              <strong>{employee?.id || "Not linked"}</strong>
+            </div>
+            <div className="employee-profile-detail">
+              <span>Department</span>
+              <strong>{employee?.department || "Not assigned"}</strong>
+            </div>
+            <div className="employee-profile-detail">
+              <span>Position</span>
+              <strong>{employee?.designation || "Not assigned"}</strong>
+            </div>
+            <div className="employee-profile-detail">
+              <span>Joined</span>
+              <strong>{joinedDate}</strong>
             </div>
           </div>
           {!employee && (
