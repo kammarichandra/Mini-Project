@@ -1138,6 +1138,11 @@ body {
   color: #3971b9;
 }
 
+.employee-page .employee-department-tag {
+  font-size: inherit;
+  font-weight: 650;
+}
+
 .employee-page .status {
   display: inline-block;
   padding: 7px 14px;
@@ -1152,8 +1157,13 @@ body {
 }
 
 .employee-page .leave-status {
-  color: #ad7d00;
-  background: #fff1bd;
+  color: #bd2c3b;
+  background: #ffeaec;
+}
+
+.employee-page .other-status {
+  color: #5d6f82;
+  background: #edf1f5;
 }
 
 .employee-page .actions {
@@ -1757,7 +1767,6 @@ body {
 
 /* Shared interior pages */
 .workspace-page {
-  max-width: 1180px;
   margin: 0 auto;
   padding: 6px 0 8px;
   color: #17365c;
@@ -2672,7 +2681,7 @@ body {
 /* Shared directory surfaces */
 .workspace-page {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1000px;
 }
 
 .workspace-grid > .dashboard-sections-grid,
@@ -3023,10 +3032,6 @@ body {
 }
 
 @media (max-width: 768px) {
-  .workspace-page {
-    max-width: none;
-  }
-
   .directory-panel,
   .payroll-directory {
     padding: 14px;
@@ -3436,10 +3441,6 @@ body {
   .content {
     padding-right: 24px;
     padding-left: 24px;
-  }
-
-  .workspace-page {
-    max-width: none;
   }
 
   .workspace-stats {
@@ -3951,6 +3952,12 @@ body {
   padding: 19px;
 }
 
+.attendance-page .workspace-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 20px;
+}
+
 .attendance-page .attendance-calendar-panel {
   padding: 19px;
 }
@@ -4005,13 +4012,13 @@ body {
 .attendance-page .attendance-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
+  gap: 6px;
 }
 
 .attendance-page .attendance-calendar-weekday {
-  padding: 5px 0;
+  padding: 6px 0;
   color: #91a0b1;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   text-align: center;
   text-transform: uppercase;
@@ -4024,11 +4031,11 @@ body {
   min-width: 0;
   place-items: center;
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: 11px;
   background: transparent;
   color: #486783;
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
 }
@@ -4105,9 +4112,9 @@ body {
 }
 
 .attendance-page .attendance-trend-bars {
-  height: 205px;
-  gap: 8px;
-  padding: 13px 2px 0;
+  height: 235px;
+  gap: 12px;
+  padding: 15px 8px 0;
   border-bottom: 1px solid #e7edf4;
 }
 
@@ -4124,7 +4131,7 @@ body {
 }
 
 .attendance-page .attendance-trend-bars > div > span {
-  width: min(25px, 72%);
+  width: min(36px, 64%);
   min-height: 4px;
   border-radius: 6px 6px 2px 2px;
   background: linear-gradient(180deg, #3db5ed, #2785d2);
@@ -4162,10 +4169,111 @@ body {
   background: #32a4dd;
 }
 
+.attendance-page .attendance-holiday-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid #f2d28a;
+  border-radius: 11px;
+  background: #fff8e6;
+  color: #815b0b;
+  font-size: 13px;
+}
+
+.attendance-page .attendance-holiday-alert i {
+  color: #d49315;
+  font-size: 16px;
+}
+
+.attendance-page .attendance-holiday-alert strong {
+  font-weight: 750;
+}
+
+.attendance-page .attendance-holidays-panel {
+  padding: 19px;
+}
+
+.attendance-page .attendance-holidays-panel .panel-heading {
+  margin-bottom: 14px;
+}
+
+.attendance-page .attendance-holidays-panel .panel-heading h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #193958;
+  font-size: 16px;
+}
+
+.attendance-page .attendance-holidays-panel .panel-heading > span {
+  color: #8192a5;
+  font-size: 10px;
+}
+
+.attendance-page .attendance-holiday-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.attendance-page .attendance-holiday-list li {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #e5edf5;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
+.attendance-page .attendance-holiday-list time {
+  color: #247bb8;
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.attendance-page .attendance-holiday-list li > span {
+  overflow: hidden;
+  color: #38536d;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attendance-page .attendance-holiday-list small {
+  color: #8192a5;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.attendance-page .attendance-holiday-list .attendance-holiday-today {
+  border-color: #f0ce7e;
+  background: #fff8e6;
+}
+
+.attendance-page .attendance-holiday-list .attendance-holiday-today small {
+  color: #a16f0a;
+  font-weight: 750;
+}
+
 @media (max-width: 700px) {
+  .attendance-page .workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
   .attendance-page .attendance-main-panel,
   .attendance-page .attendance-trend-panel,
-  .attendance-page .attendance-calendar-panel {
+  .attendance-page .attendance-calendar-panel,
+  .attendance-page .attendance-holidays-panel {
     padding: 15px;
   }
 
@@ -4185,10 +4293,23 @@ body {
   }
 
   .attendance-page .attendance-trend-bars {
-    height: 180px;
+    height: 205px;
+    gap: 8px;
+    padding-right: 2px;
+    padding-left: 2px;
   }
 
   .attendance-page .attendance-calendar-panel .panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .attendance-page .attendance-holiday-list {
+    grid-template-columns: 1fr;
+  }
+
+  .attendance-page .attendance-holidays-panel .panel-heading {
     align-items: flex-start;
     flex-direction: column;
     gap: 5px;
@@ -4200,12 +4321,14 @@ body {
 :root[data-theme="dark"] .attendance-page .attendance-main-panel .panel-heading h2,
 :root[data-theme="dark"] .attendance-page .attendance-trend-panel .panel-heading h2,
 :root[data-theme="dark"] .attendance-page .attendance-calendar-panel .panel-heading h2,
+:root[data-theme="dark"] .attendance-page .attendance-holidays-panel .panel-heading h2,
 :root[data-theme="dark"] .attendance-page .attendance-employee {
   color: #e2eaf4;
 }
 
 :root[data-theme="dark"] .attendance-page .attendance-date,
 :root[data-theme="dark"] .attendance-page .attendance-calendar-panel,
+:root[data-theme="dark"] .attendance-page .attendance-holidays-panel,
 :root[data-theme="dark"] .attendance-page .attendance-progress,
 :root[data-theme="dark"] .attendance-page .attendance-table,
 :root[data-theme="dark"] .attendance-page .attendance-table > .attendance-table-head {
@@ -4230,6 +4353,7 @@ body {
 :root[data-theme="dark"] .attendance-page .attendance-checkin,
 :root[data-theme="dark"] .attendance-page .attendance-date-note,
 :root[data-theme="dark"] .attendance-page .attendance-calendar-panel .panel-heading > span,
+:root[data-theme="dark"] .attendance-page .attendance-holidays-panel .panel-heading > span,
 :root[data-theme="dark"] .attendance-page .attendance-calendar-weekday,
 :root[data-theme="dark"] .attendance-page .attendance-calendar-legend span,
 :root[data-theme="dark"] .attendance-page .attendance-progress > div > small,
@@ -4252,6 +4376,35 @@ body {
 
 :root[data-theme="dark"] .attendance-page .attendance-trend-bars {
   border-bottom-color: #2b394c;
+}
+
+:root[data-theme="dark"] .attendance-page .attendance-holiday-alert,
+:root[data-theme="dark"] .attendance-page .attendance-holiday-list .attendance-holiday-today {
+  border-color: #705b2e;
+  background: #392f1b;
+  color: #f3d58c;
+}
+
+:root[data-theme="dark"] .attendance-page .attendance-holiday-alert i,
+:root[data-theme="dark"] .attendance-page .attendance-holiday-list .attendance-holiday-today small {
+  color: #f3c85e;
+}
+
+:root[data-theme="dark"] .attendance-page .attendance-holiday-list li {
+  border-color: #2b394c;
+  background: #192433;
+}
+
+:root[data-theme="dark"] .attendance-page .attendance-holiday-list time {
+  color: #9acbff;
+}
+
+:root[data-theme="dark"] .attendance-page .attendance-holiday-list li > span {
+  color: #dbe5f1;
+}
+
+:root[data-theme="dark"] .attendance-page .attendance-holiday-list small {
+  color: #8fa2b8;
 }
 
 :root[data-theme="dark"] .attendance-page .attendance-calendar-toolbar strong {

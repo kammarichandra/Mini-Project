@@ -876,3 +876,348 @@
     gap: 25px;
   }
 }
+
+.payroll-page .workspace-grid {
+  gap: 20px;
+}
+
+.payroll-page .payroll-directory {
+  padding: 22px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #ffffff, #f7faff);
+  box-shadow: 0 14px 34px rgba(31, 85, 126, 0.09);
+}
+
+.payroll-page .payroll-directory .filter-box {
+  display: grid;
+  grid-template-columns: minmax(145px, 0.9fr) minmax(155px, 1fr) minmax(140px, 0.85fr) minmax(270px, 1.55fr);
+  align-items: end;
+  gap: 14px;
+  padding: 18px;
+  margin-bottom: 18px;
+  border: 1px solid #e2ebf4;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #f8fbff, #f2f7fd);
+  box-shadow: none;
+}
+
+.payroll-page .payroll-directory .filter-group {
+  min-width: 0;
+}
+
+.payroll-page .payroll-directory .filter-group label {
+  margin-bottom: 7px;
+  color: #526b84;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.payroll-page .payroll-directory .filter-group select,
+.payroll-page .payroll-directory .filter-group input[type="month"] {
+  height: 42px;
+  border-color: #d7e3ef;
+  border-radius: 9px;
+  background-color: #fff;
+  color: #29445f;
+  font-size: 13px;
+}
+
+.payroll-page .payroll-directory .filter-actions {
+  width: auto;
+  min-width: 0;
+  flex: initial;
+  align-items: center;
+  gap: 8px;
+}
+
+.payroll-page .payroll-directory .filter-actions .search-box {
+  min-width: 0;
+  min-height: 42px;
+  height: 42px;
+  flex: 1 1 160px;
+  border-color: #d7e3ef;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.payroll-page .payroll-directory .reset-btn {
+  height: 42px;
+  border-radius: 9px;
+  white-space: nowrap;
+}
+
+.payroll-page .payroll-directory .table-container {
+  border-color: #e0e9f2;
+  border-radius: 13px;
+  box-shadow: 0 5px 18px rgba(31, 59, 92, 0.04);
+}
+
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) table {
+  min-width: 1080px;
+  table-layout: fixed;
+}
+
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(1),
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(1) {
+  width: 44px;
+}
+
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(2),
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(2) {
+  width: 68px;
+}
+
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(3),
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(3) {
+  width: 210px;
+}
+
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(4),
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(4) {
+  width: 140px;
+}
+
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(5),
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(5),
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(6),
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(6),
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(7),
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(7) {
+  width: 142px;
+}
+
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(8),
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(8) {
+  width: 120px;
+}
+
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(9),
+.payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(9) {
+  width: 75px;
+}
+
+.payroll-page .payroll-directory th {
+  height: 48px;
+  padding: 0 12px;
+  background: #f3f7fc;
+  color: #607991;
+  font-size: 10px;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.payroll-page .payroll-directory td {
+  height: 66px;
+  padding: 10px 12px;
+  color: #415a73;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.payroll-page .payroll-directory tbody tr:nth-child(even) {
+  background: #fbfdff;
+}
+
+.payroll-page .payroll-directory tbody tr:hover {
+  background: #f0f7ff;
+}
+
+.payroll-page .payroll-directory .employee-info {
+  gap: 10px;
+}
+
+.payroll-page .payroll-directory .employee-info strong {
+  color: #254563;
+  font-size: 12px;
+}
+
+.payroll-page .payroll-directory .employee-info small {
+  margin-top: 4px;
+  color: #8295a9;
+  font-size: 10px;
+}
+
+.payroll-page .payroll-directory .payroll-amount {
+  height: 38px;
+  padding: 0 9px;
+  border-color: #d9e4ef;
+  border-radius: 8px;
+  background: #fbfdff;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.payroll-page .payroll-directory .department {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.payroll-page .payroll-directory .status {
+  min-width: 82px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+}
+
+.payroll-page .payroll-directory .actions button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #dfe9f3;
+  border-radius: 9px;
+  background: #fff;
+  color: #4e7598;
+  font-size: 13px;
+}
+
+.payroll-page .payroll-directory .actions button:hover {
+  border-color: #b6d6f2;
+  background: #eef7ff;
+  color: #167ac2;
+}
+
+.payroll-page .payslip-history-panel {
+  border-color: #e0e9f2;
+  border-radius: 13px;
+  box-shadow: 0 5px 18px rgba(31, 59, 92, 0.04);
+}
+
+.payroll-page .payslip-history-panel .panel-heading {
+  padding: 17px 20px 13px;
+  margin: 0;
+  border-bottom-color: #e8eef5;
+}
+
+.payroll-page .payslip-history-panel .payslip {
+  padding: 0;
+  margin: 0;
+  color: #254563;
+  font-size: 15px;
+}
+
+.payroll-page .payslip-history-panel .view {
+  margin: 0;
+  color: #748aa1;
+  font-size: 11px;
+}
+
+.payroll-page .payslip-history-table th {
+  padding: 0 16px;
+}
+
+.payroll-page .payslip-history-table td {
+  height: 60px;
+  padding: 10px 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.payroll-page .payslip-history-panel .table-footer {
+  min-height: 54px;
+  padding: 0 18px;
+  border-top-color: #e8eef5;
+  background: #fbfdff;
+  font-size: 11px;
+}
+
+@media (max-width: 1050px) {
+  .payroll-page .payroll-directory .filter-box {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .payroll-page .payroll-directory .filter-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .payroll-page .payroll-directory {
+    padding: 14px;
+  }
+
+  .payroll-page .payroll-directory .filter-box {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .payroll-page .payroll-directory .filter-actions {
+    grid-column: auto;
+    flex-wrap: wrap;
+  }
+
+  .payroll-page .payroll-directory .filter-actions .search-box {
+    flex-basis: 100%;
+  }
+
+  .payroll-page .payroll-directory .reset-btn {
+    width: 100%;
+  }
+
+  .payroll-page .payslip-history-panel .panel-heading {
+    align-items: center;
+  }
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-directory {
+  border-color: #29394e;
+  background: linear-gradient(155deg, #172438, #131e2e);
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-directory .filter-box {
+  border-color: #2b3d53;
+  background: #19283c;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-directory .filter-group label,
+:root[data-theme="dark"] .payroll-page .payroll-directory .employee-info strong,
+:root[data-theme="dark"] .payroll-page .payslip-history-panel .payslip {
+  color: #dce7f5;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-directory .filter-group select,
+:root[data-theme="dark"] .payroll-page .payroll-directory .filter-group input[type="month"],
+:root[data-theme="dark"] .payroll-page .payroll-directory .filter-actions .search-box,
+:root[data-theme="dark"] .payroll-page .payroll-directory .payroll-amount,
+:root[data-theme="dark"] .payroll-page .payroll-directory .actions button {
+  border-color: #354760;
+  background: #0f1a2a;
+  color: #e0eaf6;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-directory .table-container,
+:root[data-theme="dark"] .payroll-page .payslip-history-panel {
+  border-color: #2b3d53;
+  background: #152236;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-directory tbody tr:nth-child(even),
+:root[data-theme="dark"] .payroll-page .payslip-history-panel .table-footer {
+  background: #17263a;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-directory tbody tr:hover {
+  background: #20344d;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-directory th,
+:root[data-theme="dark"] .payroll-page .payslip-history-panel th {
+  background: #1b2a3e;
+  color: #b7c7da;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-directory td,
+:root[data-theme="dark"] .payroll-page .payslip-history-panel td {
+  color: #c0cede;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-directory .employee-info small,
+:root[data-theme="dark"] .payroll-page .payslip-history-panel .view,
+:root[data-theme="dark"] .payroll-page .payslip-history-panel .table-footer {
+  color: #91a5bd;
+}
+
+:root[data-theme="dark"] .payroll-page .payslip-history-panel .panel-heading,
+:root[data-theme="dark"] .payroll-page .payslip-history-panel .table-footer {
+  border-color: #2b3d53;
+}

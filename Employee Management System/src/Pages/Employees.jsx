@@ -8,9 +8,9 @@ import { getEmployeesOnLeave } from "../utils/leave";
 import {
   createEmployeeId,
   getDepartmentAvatarStyle,
+  getDepartmentTagStyle,
   getEmployeeInitials,
   getEmployeesFromStorage,
-  getDepartmentRowStyle,
   saveEmployeesToStorage,
 } from "../utils/employees";
 
@@ -401,12 +401,20 @@ function Employees() {
                   </td>
                 </tr>
               ) : (
-                filteredEmployees.map((employee, index) => (
+                filteredEmployees.map((employee, index) => {
+                  const isCurrentlyOnLeave =
+                    employeesCurrentlyOnLeaveIds.has(String(employee.id));
+                  const employeeStatus = isCurrentlyOnLeave
+                    ? "On Leave"
+                    : employee.status;
+                  const statusClass = employeeStatus === "Active"
+                    ? "active-status"
+                    : employeeStatus === "On Leave"
+                      ? "leave-status"
+                      : "other-status";
 
-                <tr
-                  key={employee.id}
-                  style={getDepartmentRowStyle(employee.department)}
-                >
+                  return (
+                  <tr key={employee.id}>
 
                   <td>
                     {canManageEmployees && (
@@ -440,7 +448,14 @@ function Employees() {
                     {employee.id}
                   </td>
 
-                  <td>{employee.department}</td>
+                  <td>
+                    <span
+                      className="employee-department-tag"
+                      style={getDepartmentTagStyle(employee.department)}
+                    >
+                      {employee.department}
+                    </span>
+                  </td>
 
                   <td>{employee.designation}</td>
 
@@ -450,13 +465,9 @@ function Employees() {
 
                   <td>
                     <span
-                      className={
-                        employee.status === "Active"
-                          ? "status active-status"
-                          : "status leave-status"
-                      }
+                      className={`status ${statusClass}`}
                     >
-                      {employee.status}
+                      {employeeStatus}
                     </span>
                   </td>
 
@@ -500,7 +511,8 @@ function Employees() {
 
                 </tr>
 
-                ))
+                  );
+                })
               )}
 
             </tbody>

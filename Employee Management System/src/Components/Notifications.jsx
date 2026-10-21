@@ -6,6 +6,7 @@ import {
   getPayrollRecordsFromStorage,
 } from "../utils/payroll";
 import { hasRoleAccess, normalizeRole } from "../utils/auth";
+import { getHolidayForDate } from "../utils/holidays";
 import "./Notifications.css";
 
 const leaveStorageKey = "employeeManagementDashboardLeaveRequests";
@@ -13,6 +14,7 @@ const readNotificationsKey = "teamSyncReadNotifications";
 const clearedNotificationsKey = "teamSyncClearedNotifications";
 const leavePath = "/Leave_Management";
 const payrollPath = "/Payroll";
+const attendancePath = "/Attendance";
 
 function getLeaveRequests() {
   try {
@@ -30,6 +32,16 @@ function getNotifications(user) {
   const email = user?.email?.toLowerCase();
   const employees = getEmployeesFromStorage();
   const notices = [];
+  const todayHoliday = getHolidayForDate(new Date());
+
+  if (todayHoliday) {
+    notices.push({
+      id: `holiday:${todayHoliday.date}`,
+      title: "Today is a holiday",
+      message: `${todayHoliday.name} · Mandatory holiday`,
+      path: attendancePath,
+    });
+  }
 
   if (hasRoleAccess(role, leavePath)) {
     const teamEmails = role === "Manager"
@@ -204,6 +216,35 @@ function Notifications({ user }) {
     setReadIds(getStoredNotificationIds(readNotificationsKey, user));
     setStorageError("");
   };
+
+  useEffect(() => {
+    let timeoutId;
+    const scheduleDailyRefresh = () => {
+      const now = new Date();
+      const nextMidnight = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1
+      );
+      timeoutId = window.setTimeout(() => {
+        const nextClearedIds = getStoredNotificationIds(
+          clearedNotificationsKey,
+          user
+        );
+        setClearedIds(nextClearedIds);
+        setNotices(
+          getNotifications(user).filter(
+            (notice) => !nextClearedIds.has(notice.id)
+          )
+        );
+        setReadIds(getStoredNotificationIds(readNotificationsKey, user));
+        scheduleDailyRefresh();
+      }, nextMidnight.getTime() - now.getTime());
+    };
+
+    scheduleDailyRefresh();
+    return () => window.clearTimeout(timeoutId);
+  }, [user]);
 
   const saveNotificationIds = (storageKey, nextIds) => {
     const email = user?.email?.toLowerCase() || "guest";

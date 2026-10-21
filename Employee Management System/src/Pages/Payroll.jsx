@@ -4,7 +4,7 @@ import "../Payroll.css";
 import PageSurface from "../Components/PageSurface";
 import {
   getDepartmentAvatarStyle,
-  getDepartmentRowStyle,
+  getDepartmentTagStyle,
   getEmployeesFromStorage,
 } from "../utils/employees";
 import { downloadPayslipPdf } from "../utils/payslipPdf";
@@ -246,7 +246,6 @@ function Payroll() {
                 ) : employeePayslips.map((payslip, index) => (
                   <tr
                     key={`${payslip.employee.id}-${payslip.period}`}
-                    style={getDepartmentRowStyle(payslip.employee.department)}
                   >
                     <td>{index + 1}</td>
                     <td>{formatPeriod(payslip.period)}</td>
@@ -360,7 +359,6 @@ function Payroll() {
                 const netSalary = Math.max(record.salary - record.deductions, 0);
                 return <tr
                   key={employee.id}
-                  style={getDepartmentRowStyle(employee.department)}
                 >
 
                   <td>
@@ -388,7 +386,10 @@ function Payroll() {
                   </td>
 
                   <td>
-                    <span className="department">
+                    <span
+                      className="department"
+                      style={getDepartmentTagStyle(employee.department)}
+                    >
                       {employee.department}
                     </span>
                   </td>

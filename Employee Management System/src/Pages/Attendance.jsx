@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageSurface from "../Components/PageSurface";
 import { getCurrentUser, normalizeRole } from "../utils/auth";
-import { getEmployeesFromStorage } from "../utils/employees";
+import {
+  getDepartmentTagStyle,
+  getEmployeesFromStorage,
+} from "../utils/employees";
+import { getHolidayForDate, holidays2026 } from "../utils/holidays";
 
 const attendanceStorageKey = "employeeManagementDashboardAttendance";
 const attendanceStatuses = ["Not marked", "Present", "Late", "Absent"];
@@ -57,9 +61,11 @@ function Attendance() {
   const [employees] = useState(getEmployeesFromStorage);
   const [attendanceHistory, setAttendanceHistory] = useState(getAttendanceHistory);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const today = new Date();
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+  const today = new Date(currentDate);
   today.setHours(0, 0, 0, 0);
   const todayKey = getDateKey(today);
+  const todayHoliday = getHolidayForDate(today);
   const todayRecords = attendanceHistory[todayKey] || {};
   const selectedDateKey = getDateKey(selectedDate);
   const selectedDateRecords = attendanceHistory[selectedDateKey] || {};
@@ -95,6 +101,25 @@ function Attendance() {
       return;
     }
   }, [attendanceHistory]);
+
+  useEffect(() => {
+    let timeoutId;
+    const scheduleDailyRefresh = () => {
+      const now = new Date();
+      const nextMidnight = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1
+      );
+      timeoutId = window.setTimeout(() => {
+        setCurrentDate(new Date());
+        scheduleDailyRefresh();
+      }, nextMidnight.getTime() - now.getTime());
+    };
+
+    scheduleDailyRefresh();
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   const updateAttendance = (employeeId, status) => {
     setAttendanceHistory((current) => {
@@ -243,6 +268,12 @@ function Attendance() {
       ]}
     >
       <section className="workspace-panel workspace-panel-wide attendance-main-panel">
+        {todayHoliday && (
+          <div className="attendance-holiday-alert" role="status">
+            <i className="fa-solid fa-calendar-day" aria-hidden="true"></i>
+            <span><strong>Today is a holiday:</strong> {todayHoliday.name}</span>
+          </div>
+        )}
         <div className="panel-heading">
           <h2><i className="fa-solid fa-users" aria-hidden="true"></i>{isSelectedDateToday ? "Today's attendance" : "Attendance details"}</h2>
           <span className="attendance-date"><i className="fa-regular fa-calendar" aria-hidden="true"></i>{selectedDateLabel}</span>
@@ -282,7 +313,12 @@ function Attendance() {
                 <span className="attendance-avatar" aria-hidden="true">{initials}</span>
                 <span>{employee.name}<small>{employee.id}</small></span>
               </span>
-              <span className="attendance-department">{employee.department}</span>
+              <span
+                className="attendance-department"
+                style={getDepartmentTagStyle(employee.department)}
+              >
+                {employee.department}
+              </span>
               <span className="attendance-checkin">
                 <i className="fa-regular fa-clock" aria-hidden="true"></i>
                 {record?.checkIn || "Not checked in"}
@@ -406,6 +442,30 @@ function Attendance() {
           <span><i aria-hidden="true"></i>Present or late</span>
           <span>Daily attendance rate</span>
         </div>
+      </section>
+      <section className="workspace-panel workspace-panel-wide attendance-holidays-panel">
+        <div className="panel-heading">
+          <h2><i className="fa-solid fa-umbrella-beach" aria-hidden="true"></i>Holiday list</h2>
+          <span>Mandatory holidays · 2026</span>
+        </div>
+        <ul className="attendance-holiday-list">
+          {holidays2026.map((holiday) => {
+            const holidayDate = new Date(`${holiday.date}T00:00:00`);
+            const isToday = holiday.date === todayKey;
+            return (
+              <li className={isToday ? "attendance-holiday-today" : ""} key={holiday.date}>
+                <time dateTime={holiday.date}>
+                  {holidayDate.toLocaleDateString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </time>
+                <span>{holiday.name}</span>
+                <small>{isToday ? "Today" : "Mandatory"}</small>
+              </li>
+            );
+          })}
+        </ul>
       </section>
     </PageSurface>
   );

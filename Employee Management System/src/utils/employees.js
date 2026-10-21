@@ -60,6 +60,13 @@ export function getDepartmentAvatarStyle(department) {
   ];
 }
 
+export function getDepartmentTagStyle(department) {
+  const colors = getDepartmentAvatarStyle(department);
+  return {
+    color: colors.color,
+  };
+}
+
 export function getDepartmentRowStyle(department) {
   return {
     backgroundColor: getDepartmentAvatarStyle(department).row,

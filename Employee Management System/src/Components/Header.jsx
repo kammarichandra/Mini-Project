@@ -1,10 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { getCurrentUser, logoutUser } from "../utils/auth";
+import { getEmployeeInitials } from "../utils/employees";
 import Notifications from "./Notifications";
 
 function Header({ onMenuToggle }) {
   const navigate = useNavigate();
   const user = getCurrentUser();
+  const displayName = user?.fullName || user?.email?.split("@")[0] || "User";
+  const avatarInitials = getEmployeeInitials(
+    displayName.replace(/[._-]+/g, " ")
+  );
 
   return (
     <header className="app-header">
@@ -24,9 +29,11 @@ function Header({ onMenuToggle }) {
 
       <div className="header-user">
         <Notifications user={user} />
-        <div className="header-avatar">CS</div>
+        <div className="header-avatar" aria-label={`${displayName} profile`}>
+          {avatarInitials}
+        </div>
         <div className="header-user-copy">
-          <strong>{user?.fullName || "User"}</strong>
+          <strong>{displayName}</strong>
           <small>{user?.role || "Employee"}</small>
         </div>
         <button className="user-menu-button" type="button" onClick={() => { logoutUser(); navigate("/", { replace: true }); }} aria-label="Log out">
