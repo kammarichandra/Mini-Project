@@ -314,9 +314,8 @@
   border: 1px solid #d8e5f1;
   border-radius: 14px;
   max-width: 100%;
-  overflow-x: auto;
+  overflow: hidden;
   overflow-y: hidden;
-  overscroll-behavior-x: contain;
   box-shadow: 0 10px 28px rgba(15, 35, 70, 0.06);
 }
 
@@ -337,6 +336,7 @@
 
 .payroll-page .payslip-history-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
 }
 
@@ -361,7 +361,7 @@
   font-size: 13px;
   font-weight: 700;
   border-bottom: 1px solid #dce7f1;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .payroll-page td {
@@ -371,6 +371,7 @@
   font-size: 12px;
   border-bottom: 1px solid #e3ebf3;
   vertical-align: middle;
+  overflow-wrap: anywhere;
 }
 
 .payroll-page .table-container:not(.payslip-history-panel) th:nth-child(1),
@@ -399,7 +400,7 @@
 .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(6),
 .payroll-page .table-container:not(.payslip-history-panel) th:nth-child(7),
 .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(7) {
-  width: 13%;
+  width: 12%;
 }
 
 .payroll-page 
@@ -410,7 +411,7 @@
 
 .payroll-page .table-container:not(.payslip-history-panel) th:nth-child(9),
 .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(9) {
-  width: 7%;
+  width: 11%;
 }
 
 .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(3) {
@@ -772,7 +773,7 @@
   }
 
   .payroll-page .table-container {
-    overflow-x: auto;
+    overflow: hidden;
   }
 
 }
@@ -851,11 +852,109 @@
   /* Table */
 
   .payroll-page .table-container {
-    overflow-x: auto;
+    overflow: hidden;
   }
 
   .payroll-page .table-container:not(.payslip-history-panel) table {
-    min-width: 900px;
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .payroll-page .table-container:not(.payslip-history-panel) th:nth-child(1),
+  .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(1),
+  .payroll-page .table-container:not(.payslip-history-panel) th:nth-child(2),
+  .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(2),
+  .payroll-page .table-container:not(.payslip-history-panel) th:nth-child(4),
+  .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(4),
+  .payroll-page .table-container:not(.payslip-history-panel) th:nth-child(5),
+  .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(5),
+  .payroll-page .table-container:not(.payslip-history-panel) th:nth-child(6),
+  .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(6) {
+    display: none;
+  }
+
+  .payroll-page .table-container:not(.payslip-history-panel) th:nth-child(3),
+  .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(3) {
+    width: 34%;
+  }
+
+  .payroll-page .table-container:not(.payslip-history-panel) th:nth-child(7),
+  .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(7) {
+    width: 26%;
+  }
+
+  .payroll-page .table-container:not(.payslip-history-panel) th:nth-child(8),
+  .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(8) {
+    width: 20%;
+  }
+
+  .payroll-page .table-container:not(.payslip-history-panel) th:nth-child(9),
+  .payroll-page .table-container:not(.payslip-history-panel) td:nth-child(9) {
+    width: 20%;
+  }
+
+  .payroll-page .table-container:not(.payslip-history-panel) th,
+  .payroll-page .table-container:not(.payslip-history-panel) td,
+  .payroll-page .payslip-history-table th,
+  .payroll-page .payslip-history-table td {
+    padding: 7px 5px;
+    font-size: 10px;
+    overflow-wrap: anywhere;
+  }
+
+  .payroll-page .table-container:not(.payslip-history-panel) .employee-info .avatar {
+    display: none;
+  }
+
+  .payroll-page .table-container:not(.payslip-history-panel) .employee-info strong,
+  .payroll-page .table-container:not(.payslip-history-panel) .employee-info small {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .payroll-page .table-container:not(.payslip-history-panel) .actions {
+    gap: 2px;
+  }
+
+  .payroll-page .table-container:not(.payslip-history-panel) .actions button {
+    width: 24px;
+    height: 26px;
+  }
+
+  .payroll-page .table-container:not(.payslip-history-panel) .status {
+    min-width: 0;
+    padding: 4px;
+    white-space: normal;
+  }
+
+  .payroll-page .payslip-history-table th:nth-child(1),
+  .payroll-page .payslip-history-table td:nth-child(1),
+  .payroll-page .payslip-history-table th:nth-child(3),
+  .payroll-page .payslip-history-table td:nth-child(3),
+  .payroll-page .payslip-history-table th:nth-child(4),
+  .payroll-page .payslip-history-table td:nth-child(4) {
+    display: none;
+  }
+
+  .payroll-page .payslip-history-table th:nth-child(2),
+  .payroll-page .payslip-history-table td:nth-child(2) {
+    width: 24%;
+  }
+
+  .payroll-page .payslip-history-table th:nth-child(5),
+  .payroll-page .payslip-history-table td:nth-child(5) {
+    width: 30%;
+  }
+
+  .payroll-page .payslip-history-table th:nth-child(6),
+  .payroll-page .payslip-history-table td:nth-child(6) {
+    width: 20%;
+  }
+
+  .payroll-page .payslip-history-table th:nth-child(7),
+  .payroll-page .payslip-history-table td:nth-child(7) {
+    width: 26%;
   }
 
   /* Footer */
@@ -955,28 +1054,29 @@
 }
 
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) table {
-  min-width: 1080px;
+  width: 100%;
+  min-width: 0;
   table-layout: fixed;
 }
 
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(1),
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(1) {
-  width: 44px;
+  width: 4%;
 }
 
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(2),
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(2) {
-  width: 68px;
+  width: 6%;
 }
 
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(3),
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(3) {
-  width: 210px;
+  width: 19%;
 }
 
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(4),
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(4) {
-  width: 140px;
+  width: 12%;
 }
 
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(5),
@@ -985,17 +1085,17 @@
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(6),
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(7),
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(7) {
-  width: 142px;
+  width: 12%;
 }
 
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(8),
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(8) {
-  width: 120px;
+  width: 11%;
 }
 
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(9),
 .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(9) {
-  width: 75px;
+  width: 11%;
 }
 
 .payroll-page .payroll-directory th {
@@ -1156,6 +1256,38 @@
 
   .payroll-page .payslip-history-panel .panel-heading {
     align-items: center;
+  }
+
+  .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(3),
+  .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(3) {
+    width: 34%;
+  }
+
+  .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(7),
+  .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(7) {
+    width: 26%;
+  }
+
+  .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(8),
+  .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(8) {
+    width: 20%;
+  }
+
+  .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) th:nth-child(9),
+  .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) td:nth-child(9) {
+    width: 20%;
+  }
+
+  .payroll-page .payroll-directory .table-container:not(.payslip-history-panel) .payroll-amount {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .payroll-page .payslip-history-table th,
+  .payroll-page .payslip-history-table td {
+    padding: 7px 5px;
+    font-size: 10px;
+    overflow-wrap: anywhere;
   }
 }
 

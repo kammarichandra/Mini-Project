@@ -201,7 +201,7 @@ function Settings() {
         { label: "Appearance", value: theme === "dark" ? "Dark" : "Light", note: "Workspace theme" },
       ]}
     >
-      <section className="workspace-panel">
+      <section className="workspace-panel settings-account-panel">
         <div className="panel-heading"><h2>My account</h2><span>{role || "Account"}</span></div>
         <div className="profile-summary">
           <div className="large-avatar">{settings.displayName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</div>

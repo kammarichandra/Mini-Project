@@ -1257,11 +1257,29 @@ body {
   }
 
   .employee-page .table-container {
-    overflow-x: auto;
+    overflow: hidden;
   }
 
   .employee-page table {
-    min-width: 980px;
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .employee-page th,
+  .employee-page td {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .employee-page .actions {
+    gap: 4px;
+  }
+
+  .employee-page .actions button {
+    width: 28px;
+    height: 30px;
+    font-size: 14px;
   }
 }
 
@@ -1280,7 +1298,7 @@ body {
   }
 
   .employee-page .table-container {
-    overflow-x: visible;
+    overflow: hidden;
   }
 
   .employee-page table {
@@ -1311,27 +1329,38 @@ body {
 
   .employee-page th:nth-child(1),
   .employee-page td:nth-child(1) {
-    width: 38px;
+    width: 30px;
   }
 
   .employee-page th:nth-child(3),
   .employee-page td:nth-child(3) {
-    width: 42%;
+    width: 33%;
   }
 
   .employee-page th:nth-child(5),
   .employee-page td:nth-child(5) {
-    width: 26%;
+    width: 15%;
   }
 
   .employee-page th:nth-child(8),
   .employee-page td:nth-child(8) {
-    width: 20%;
+    width: 15%;
   }
 
   .employee-page th:nth-child(9),
   .employee-page td:nth-child(9) {
-    width: 90px;
+    width: 58px;
+  }
+
+  .employee-page th,
+  .employee-page td {
+    padding: 6px 4px;
+    overflow-wrap: anywhere;
+  }
+
+  .employee-page .employee-name strong,
+  .employee-page td {
+    font-size: 11px;
   }
 
   .employee-page .employee-name {
@@ -1379,9 +1408,8 @@ body {
   }
 
   .dashboard-container .table-responsive {
-    overflow-x: auto;
-    margin: 0 -18px;
-    padding: 0 18px;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 }
 
@@ -2154,11 +2182,12 @@ body {
 }
 
 .attendance-table {
-  overflow-x: auto;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .attendance-table>div {
-  min-width: 620px;
+  min-width: 0;
   grid-template-columns: minmax(140px, 1.3fr) minmax(110px, 1fr) 85px minmax(130px, 0.9fr);
 }
 
@@ -2848,7 +2877,8 @@ body {
 
 .directory-panel .table-container,
 .payroll-directory .table-container {
-  overflow-x: auto;
+  max-width: 100%;
+  overflow: hidden;
   border: 1px solid #e4edf4;
   border-radius: 7px;
   background: #fff;
@@ -2857,8 +2887,201 @@ body {
 .directory-panel table,
 .payroll-directory table {
   width: 100%;
-  min-width: 760px;
+  min-width: 0;
+  table-layout: fixed;
   border-collapse: collapse;
+}
+
+.directory-panel .employee-directory-table th:nth-child(1),
+.directory-panel .employee-directory-table td:nth-child(1) {
+  width: 4%;
+}
+
+.directory-panel .employee-directory-table th:nth-child(2),
+.directory-panel .employee-directory-table td:nth-child(2) {
+  width: 5%;
+}
+
+.directory-panel .employee-directory-table th:nth-child(3),
+.directory-panel .employee-directory-table td:nth-child(3) {
+  width: 16%;
+}
+
+.directory-panel .employee-directory-table th:nth-child(4),
+.directory-panel .employee-directory-table td:nth-child(4) {
+  width: 10%;
+}
+
+.directory-panel .employee-directory-table th:nth-child(5),
+.directory-panel .employee-directory-table td:nth-child(5) {
+  width: 12%;
+}
+
+.directory-panel .employee-directory-table th:nth-child(6),
+.directory-panel .employee-directory-table td:nth-child(6) {
+  width: 12%;
+}
+
+.directory-panel .employee-directory-table th:nth-child(7),
+.directory-panel .employee-directory-table td:nth-child(7) {
+  width: 19%;
+}
+
+.directory-panel .employee-directory-table th:nth-child(8),
+.directory-panel .employee-directory-table td:nth-child(8) {
+  width: 11%;
+}
+
+.directory-panel .employee-directory-table th:nth-child(9),
+.directory-panel .employee-directory-table td:nth-child(9) {
+  width: 11%;
+}
+
+.directory-panel .employee-directory-table td {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.directory-panel .employee-directory-table .employee-name {
+  min-width: 0;
+}
+
+.directory-panel .employee-directory-table .employee-name strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.directory-panel .employee-directory-table .employee-department-tag,
+.directory-panel .employee-directory-table .status {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.directory-panel .employee-directory-table .actions {
+  flex-wrap: nowrap;
+  gap: 2px;
+}
+
+.directory-panel .employee-directory-table .actions button {
+  flex: 0 0 27px;
+}
+
+.directory-panel .employee-directory-table .email {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1100px) {
+  .directory-panel .employee-directory-table th:nth-child(2),
+  .directory-panel .employee-directory-table td:nth-child(2),
+  .directory-panel .employee-directory-table th:nth-child(4),
+  .directory-panel .employee-directory-table td:nth-child(4),
+  .directory-panel .employee-directory-table th:nth-child(6),
+  .directory-panel .employee-directory-table td:nth-child(6) {
+    display: none;
+  }
+
+  .directory-panel .employee-directory-table th:nth-child(1),
+  .directory-panel .employee-directory-table td:nth-child(1) {
+    width: 5%;
+  }
+
+  .directory-panel .employee-directory-table th:nth-child(3),
+  .directory-panel .employee-directory-table td:nth-child(3) {
+    width: 24%;
+  }
+
+  .directory-panel .employee-directory-table th:nth-child(5),
+  .directory-panel .employee-directory-table td:nth-child(5) {
+    width: 17%;
+  }
+
+  .directory-panel .employee-directory-table th:nth-child(7),
+  .directory-panel .employee-directory-table td:nth-child(7) {
+    width: 27%;
+  }
+
+  .directory-panel .employee-directory-table th:nth-child(8),
+  .directory-panel .employee-directory-table td:nth-child(8) {
+    width: 13%;
+  }
+
+  .directory-panel .employee-directory-table th:nth-child(9),
+  .directory-panel .employee-directory-table td:nth-child(9) {
+    width: 14%;
+  }
+}
+
+@media (max-width: 640px) {
+  .directory-panel .employee-directory-table th:nth-child(7),
+  .directory-panel .employee-directory-table td:nth-child(7) {
+    display: none;
+  }
+
+  .directory-panel .employee-directory-table th:nth-child(1),
+  .directory-panel .employee-directory-table td:nth-child(1) {
+    width: 9%;
+    padding-right: 3px;
+    padding-left: 8px;
+  }
+
+  .directory-panel .employee-directory-table th:nth-child(3),
+  .directory-panel .employee-directory-table td:nth-child(3) {
+    width: 32%;
+  }
+
+  .directory-panel .employee-directory-table th:nth-child(5),
+  .directory-panel .employee-directory-table td:nth-child(5) {
+    width: 18%;
+  }
+
+  .directory-panel .employee-directory-table th:nth-child(8),
+  .directory-panel .employee-directory-table td:nth-child(8) {
+    width: 16%;
+  }
+
+  .directory-panel .employee-directory-table th:nth-child(9),
+  .directory-panel .employee-directory-table td:nth-child(9) {
+    width: 25%;
+    padding-right: 4px;
+    padding-left: 4px;
+  }
+
+  .directory-panel .employee-directory-table td {
+    padding: 8px 4px;
+    font-size: 11px;
+  }
+
+  .directory-panel .employee-directory-table .employee-name {
+    gap: 6px;
+  }
+
+  .directory-panel .employee-directory-table .employee-avatar {
+    width: 24px;
+    height: 24px;
+    flex-basis: 24px;
+    font-size: 10px;
+  }
+
+  .directory-panel .employee-directory-table .employee-name strong {
+    font-size: 11px;
+  }
+
+  .directory-panel .employee-directory-table .status {
+    padding: 4px;
+    font-size: 10px;
+  }
+
+  .directory-panel .employee-directory-table .actions {
+    gap: 1px;
+  }
+
+  .directory-panel .employee-directory-table .actions button {
+    width: 20px;
+    height: 24px;
+    flex-basis: 20px;
+    font-size: 12px;
+  }
 }
 
 .directory-panel th,
@@ -2871,7 +3094,7 @@ body {
   font-size: 13px;
   font-weight: 700;
   text-align: left;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .directory-panel td,
@@ -2881,7 +3104,22 @@ body {
   border-bottom: 1px solid #edf2f6;
   color: #4b6884;
   font-size: 14px;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
+.table-responsive {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.table-responsive table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.table-responsive th,
+.table-responsive td {
+  overflow-wrap: anywhere;
 }
 
 .directory-panel tbody tr:last-child td,
@@ -3127,8 +3365,7 @@ body {
   }
 
   .table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
   }
 
   .workspace-heading {
@@ -3525,6 +3762,10 @@ body {
   min-width: 0;
 }
 
+.settings-page .settings-account-panel {
+  min-height: 390px;
+}
+
 .settings-page .profile-summary {
   margin: 20px 0 18px;
 }
@@ -3755,17 +3996,18 @@ body {
 }
 
 .attendance-page .attendance-table {
-  overflow-x: auto;
+  max-width: 100%;
+  overflow: hidden;
   border: 1px solid #e0e9f2;
   border-radius: 10px;
   background: #fff;
 }
 
 .attendance-page .attendance-table > div {
-  min-width: 1040px;
-  grid-template-columns: minmax(170px, 1.3fr) minmax(100px, 0.8fr) minmax(105px, 0.85fr) minmax(115px, 0.9fr) minmax(125px, 0.9fr) minmax(185px, 1.2fr);
-  gap: 15px;
-  padding: 12px 16px;
+  min-width: 0;
+  grid-template-columns: minmax(130px, 1.25fr) minmax(75px, 0.75fr) minmax(85px, 0.85fr) minmax(85px, 0.85fr) minmax(120px, 1fr) minmax(68px, 0.6fr);
+  gap: 8px;
+  padding: 12px;
   border-top-color: #edf2f7;
   color: #425e79;
   font-size: 13px;
@@ -3785,6 +4027,73 @@ body {
 .attendance-page .attendance-table > .attendance-table-row {
   min-height: 68px;
   transition: background-color 150ms ease;
+}
+
+.attendance-page .attendance-table > div > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.attendance-page .attendance-table select.attendance-status {
+  padding: 0 6px;
+}
+
+@media (max-width: 900px) {
+  .attendance-page .attendance-table > div {
+    grid-template-columns: minmax(100px, 1.2fr) minmax(55px, 0.7fr) minmax(65px, 0.8fr) minmax(65px, 0.8fr) minmax(95px, 1fr) minmax(60px, 0.6fr);
+    gap: 6px;
+    padding: 10px 8px;
+    font-size: 11px;
+  }
+
+  .attendance-page .attendance-actions {
+    gap: 4px;
+  }
+
+  .attendance-page .attendance-actions-compact button {
+    width: 28px;
+    min-width: 28px;
+    min-height: 30px;
+  }
+}
+
+@media (max-width: 640px) {
+  .attendance-page .attendance-table > .attendance-table-head {
+    display: none;
+  }
+
+  .attendance-page .attendance-table > .attendance-table-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px 12px;
+    padding: 12px;
+  }
+
+  .attendance-page .attendance-table .attendance-employee {
+    grid-column: 1 / -1;
+  }
+
+  .attendance-page .attendance-table .attendance-department {
+    display: none;
+  }
+
+  .attendance-page .attendance-table .attendance-checkin,
+  .attendance-page .attendance-table .attendance-checkout {
+    font-size: 11px;
+  }
+
+  .attendance-page .attendance-table .attendance-checkin:not(.attendance-checkout)::before {
+    content: "In ";
+    color: #8395a9;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .attendance-page .attendance-table .attendance-checkout::before {
+    content: "Out ";
+    color: #8395a9;
+    font-size: 10px;
+    font-weight: 700;
+  }
 }
 
 .attendance-page .attendance-table > .attendance-table-row:hover {
@@ -3849,6 +4158,17 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.attendance-page .attendance-actions-compact button {
+  width: 32px;
+  min-width: 32px;
+  padding: 0;
+  font-size: 18px;
+}
+
+.attendance-page .attendance-actions-compact button span {
+  line-height: 1;
 }
 
 .attendance-page .attendance-actions button {
@@ -3929,6 +4249,37 @@ body {
   border-color: #dce6ef;
   background: #f5f8fb;
   color: #687d91;
+}
+
+.attendance-page .attendance-status-keep-available {
+  border-color: #c7edda;
+  background: #edfaf3;
+  color: #168152;
+}
+
+.attendance-page .attendance-status-appear-offline {
+  border-color: #dce6ef;
+  background: #f5f8fb;
+  color: #687d91;
+}
+
+.attendance-page .attendance-status-do-not-disturb {
+  border-color: #f1d2d0;
+  background: #fff2f1;
+  color: #b54f49;
+}
+
+.attendance-page .attendance-status-out-of-office {
+  border-color: #f3dfb1;
+  background: #fff8e8;
+  color: #a66c0b;
+}
+
+.attendance-page .attendance-status-be-right-back,
+.attendance-page .attendance-status-appear-away {
+  border-color: #cce1f5;
+  background: #f0f7ff;
+  color: #2675bb;
 }
 
 .attendance-page .attendance-status:focus {
@@ -4470,6 +4821,37 @@ body {
   border-color: #3a4a60;
   background: #202c3b;
   color: #b0bfd0;
+}
+
+:root[data-theme="dark"] .attendance-page .attendance-status-keep-available {
+  border-color: #285b47;
+  background: #1c382e;
+  color: #8ae0b5;
+}
+
+:root[data-theme="dark"] .attendance-page .attendance-status-appear-offline {
+  border-color: #3a4a60;
+  background: #202c3b;
+  color: #b0bfd0;
+}
+
+:root[data-theme="dark"] .attendance-page .attendance-status-do-not-disturb {
+  border-color: #653b3a;
+  background: #3d2929;
+  color: #f0a09b;
+}
+
+:root[data-theme="dark"] .attendance-page .attendance-status-out-of-office {
+  border-color: #65502d;
+  background: #3b3020;
+  color: #f0c56e;
+}
+
+:root[data-theme="dark"] .attendance-page .attendance-status-be-right-back,
+:root[data-theme="dark"] .attendance-page .attendance-status-appear-away {
+  border-color: #355778;
+  background: #20364d;
+  color: #9acbff;
 }
 
 /* Unified dark surfaces for every application route. */

@@ -9,7 +9,15 @@ import {
 import { getHolidayForDate, holidays2026 } from "../utils/holidays";
 
 const attendanceStorageKey = "employeeManagementDashboardAttendance";
-const attendanceStatuses = ["Not marked", "Present", "Late", "Absent"];
+const availabilityStorageKey = "employeeManagementAvailability";
+const availabilityStatuses = [
+  "Keep available",
+  "Appear offline",
+  "Do not disturb",
+  "Out of office",
+  "Be right back",
+  "Appear away",
+];
 
 function getDateKey(date) {
   const year = date.getFullYear();
@@ -25,6 +33,19 @@ function getAttendanceHistory() {
     );
     return history && typeof history === "object" && !Array.isArray(history)
       ? history
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function getAvailabilityStatuses() {
+  try {
+    const statuses = JSON.parse(
+      window.localStorage.getItem(availabilityStorageKey) || "{}"
+    );
+    return statuses && typeof statuses === "object" && !Array.isArray(statuses)
+      ? statuses
       : {};
   } catch {
     return {};
@@ -60,6 +81,7 @@ function Attendance() {
   const role = normalizeRole(currentUser?.role);
   const [employees] = useState(getEmployeesFromStorage);
   const [attendanceHistory, setAttendanceHistory] = useState(getAttendanceHistory);
+  const [employeeAvailability, setEmployeeAvailability] = useState(getAvailabilityStatuses);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const today = new Date(currentDate);
@@ -103,6 +125,17 @@ function Attendance() {
   }, [attendanceHistory]);
 
   useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        availabilityStorageKey,
+        JSON.stringify(employeeAvailability)
+      );
+    } catch {
+      return;
+    }
+  }, [employeeAvailability]);
+
+  useEffect(() => {
     let timeoutId;
     const scheduleDailyRefresh = () => {
       const now = new Date();
@@ -121,27 +154,11 @@ function Attendance() {
     return () => window.clearTimeout(timeoutId);
   }, []);
 
-  const updateAttendance = (employeeId, status) => {
-    setAttendanceHistory((current) => {
-      const currentDay = current[selectedDateKey] || {};
-      const previousRecord = currentDay[employeeId] || {};
-      const checkIn = ["Present", "Late"].includes(status)
-        ? previousRecord.checkIn || formatTime(new Date())
-        : "";
-
-      return {
-        ...current,
-        [selectedDateKey]: {
-          ...currentDay,
-          [employeeId]: {
-            ...previousRecord,
-            status,
-            checkIn,
-            checkOut: checkIn ? previousRecord.checkOut || "" : "",
-          },
-        },
-      };
-    });
+  const updateAvailability = (employeeId, status) => {
+    setEmployeeAvailability((current) => ({
+      ...current,
+      [employeeId]: status,
+    }));
   };
 
   const checkInEmployee = (employeeId) => {
@@ -256,7 +273,9 @@ function Attendance() {
     <PageSurface
       className="attendance-page"
       title="Attendance"
-      subtitle="Review attendance by date and check in or out for your team."
+      subtitle={role === "Employee"
+        ? "Manage your availability and check in or out for today."
+        : "Review attendance by date and check in or out for your team."}
       icon="fa-calendar-check"
       actionLabel="Export Report"
       onAction={exportReport}
@@ -296,12 +315,10 @@ function Attendance() {
         </div> */}
         {!isSelectedDateToday && <p className="attendance-date-note">Viewing a previous or future date. Check-in and check-out are available for today.</p>}
         {visibleEmployees.length ? <div className="mini-table attendance-table">
-          <div className="attendance-table-head"><b>Employee</b><b>Department</b><b>Check-in</b><b>Check-out</b><b>Status</b><b>Actions</b></div>
+          <div className="attendance-table-head"><b>Employee</b><b>Department</b><b>Check-in</b><b>Check-out</b><b>Availability</b><b>Actions</b></div>
           {visibleEmployees.map((employee) => {
             const record = selectedDateRecords[employee.id];
-            const status = employee.status === "On Leave"
-              ? "On leave"
-              : record?.status || "Not marked";
+            const availability = employeeAvailability[employee.id] || "Keep available";
             const initials = employee.name
               .split(/\s+/)
               .map((part) => part[0])
@@ -328,16 +345,15 @@ function Attendance() {
                 {record?.checkOut || "Not checked out"}
               </span>
               <select
-                className={`attendance-status attendance-status-${status.toLowerCase().replaceAll(" ", "-")}`}
-                aria-label={`Attendance status for ${employee.name}`}
-                value={status}
-                disabled={employee.status === "On Leave" || !isSelectedDateToday}
-                onChange={(event) => updateAttendance(employee.id, event.target.value)}
+                className={`attendance-status attendance-status-${availability.toLowerCase().replaceAll(" ", "-")}`}
+                aria-label={`Availability for ${employee.name}`}
+                value={availability}
+                disabled={employee.status === "On Leave"}
+                onChange={(event) => updateAvailability(employee.id, event.target.value)}
               >
-                {employee.status === "On Leave" && <option>On leave</option>}
-                {attendanceStatuses.map((attendanceStatus) => <option key={attendanceStatus}>{attendanceStatus}</option>)}
+                {availabilityStatuses.map((availabilityStatus) => <option key={availabilityStatus}>{availabilityStatus}</option>)}
               </select>
-              <span className="attendance-actions">
+              <span className="attendance-actions attendance-actions-compact">
                 <button
                   className="attendance-action-check-in"
                   type="button"
@@ -345,8 +361,7 @@ function Attendance() {
                   onClick={() => checkInEmployee(employee.id)}
                   aria-label={`Check in ${employee.name}`}
                 >
-                  <i className="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i>
-                  Check in
+                  <span aria-hidden="true">+</span>
                 </button>
                 <button
                   className="attendance-action-check-out"
@@ -355,8 +370,7 @@ function Attendance() {
                   onClick={() => checkOutEmployee(employee.id)}
                   aria-label={`Check out ${employee.name}`}
                 >
-                  <i className="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
-                  {record?.checkOut ? "Done" : "Check out"}
+                  <span aria-hidden="true">-</span>
                 </button>
               </span>
             </div>;

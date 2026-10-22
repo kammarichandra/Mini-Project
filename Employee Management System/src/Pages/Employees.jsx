@@ -357,7 +357,7 @@ function Employees() {
         /* ================= EMPLOYEE TABLE ================= */}
         <div className="table-container">
 
-          <table>
+          <table className="employee-directory-table">
 
             <thead>
               <tr>
