@@ -11,6 +11,7 @@ import {
 } from "../utils/employees";
 import { getCurrentUser, normalizeRole } from "../utils/auth";
 import { getEmployeesOnLeave } from "../utils/leave";
+import { holidays2026 } from "../utils/holidays";
 
 function Dashboard() {
   const currentUser = getCurrentUser();
@@ -113,19 +114,60 @@ function Dashboard() {
             day: "numeric",
           })
         : "Not available";
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const upcomingHoliday = holidays2026.find(({ date }) => {
+      const [year, month, day] = date.split("-").map(Number);
+      return new Date(year, month - 1, day) >= today;
+    });
+    const holidayDate = upcomingHoliday
+      ? new Date(`${upcomingHoliday.date}T00:00:00`)
+      : null;
+    const daysUntilHoliday = holidayDate
+      ? Math.round((holidayDate - today) / (24 * 60 * 60 * 1000))
+      : null;
 
     return (
       <PageSurface
         title="My Dashboard"
         subtitle={`Welcome back, ${displayName}. Here is your employee overview.`}
         icon="fa-gauge-high"
-        stats={[
-          { label: "Employee ID", value: employee?.id || "Not linked", note: "Your profile" },
-          { label: "Department", value: employee?.department || "Not assigned", note: "Current assignment" },
-          { label: "Position", value: employee?.designation || "Employee", note: "Job title" },
-          { label: "Status", value: employee?.status || "Profile pending", note: "Employment status" },
-        ]}
+        stats={[]}
       >
+        <section className="workspace-panel workspace-panel-wide employee-holiday-panel">
+          <div className="employee-holiday-icon" aria-hidden="true">
+            <i className="fa-solid fa-calendar-check"></i>
+          </div>
+          <div className="employee-holiday-copy">
+            <span>UP NEXT</span>
+            <h2>{upcomingHoliday?.name || "No upcoming holidays listed"}</h2>
+            <p>
+              {holidayDate
+                ? holidayDate.toLocaleDateString(undefined, {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : "Check back later for your next company holiday."}
+            </p>
+          </div>
+          <div className="employee-holiday-action">
+            {upcomingHoliday && (
+              <div className="employee-holiday-countdown">
+                <strong>{daysUntilHoliday === 0 ? "Today" : daysUntilHoliday}</strong>
+                <span>
+                  {daysUntilHoliday === 0
+                    ? "Enjoy the holiday"
+                    : daysUntilHoliday === 1
+                      ? "day to go"
+                      : "days to go"}
+                </span>
+              </div>
+            )}
+            <Link className="panel-button" to="/Leave_Management">Plan time off</Link>
+          </div>
+        </section>
+
         <section className="workspace-panel employee-profile-panel">
           <div className="panel-heading">
             <h2>My profile</h2>
@@ -349,10 +391,7 @@ function Dashboard() {
             Department
           </label>
 
-          <select
-            className="form-select"
-            value={department}
-            onChange={(e) =>
+          <select className="form-select" value={department} onChange={(e) =>
               setDepartment(e.target.value)
             }
           >

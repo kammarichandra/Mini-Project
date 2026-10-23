@@ -18,6 +18,15 @@ const availabilityStatuses = [
   "Be right back",
   "Appear away",
 ];
+const departmentChartColors = [
+  "#2785d2",
+  "#26a780",
+  "#e6a23c",
+  "#8a6bd1",
+  "#e16b78",
+  "#27aabb",
+  "#7993ad",
+];
 
 function getDateKey(date) {
   const year = date.getFullYear();
@@ -247,6 +256,68 @@ function Attendance() {
         : 0,
     };
   });
+  const weeklyTrend = getWeeklyTrend();
+  const departmentWeeklyAttendance = activeEmployees
+    .reduce((departmentsByName, employee) => {
+      const departmentName = employee.department.trim() || "Unassigned";
+      if (!departmentsByName.has(departmentName)) {
+        departmentsByName.set(departmentName, {
+          name: departmentName,
+          employeeCount: 0,
+          presentCount: 0,
+        });
+      }
+
+      const department = departmentsByName.get(departmentName);
+      department.employeeCount += 1;
+      department.presentCount += weeklyTrend.reduce((count, day) => (
+        ["Present", "Late"].includes(
+          attendanceHistory[day.date]?.[employee.id]?.status
+        )
+          ? count + 1
+          : count
+      ), 0);
+      return departmentsByName;
+    }, new Map())
+    .values();
+  const departmentAttendance = Array.from(departmentWeeklyAttendance)
+    .sort((first, second) => first.name.localeCompare(second.name))
+    .map((department, index) => ({
+      ...department,
+      color: departmentChartColors[index % departmentChartColors.length],
+      eligibleCount: department.employeeCount * weeklyTrend.length,
+      rate: department.employeeCount
+        ? Math.round(
+            (department.presentCount /
+              (department.employeeCount * weeklyTrend.length)) *
+              100
+          )
+        : 0,
+    }));
+  const totalDepartmentPresent = departmentAttendance.reduce(
+    (total, department) => total + department.presentCount,
+    0
+  );
+  const departmentChartSegments = departmentAttendance
+    .filter((department) => department.presentCount > 0)
+    .reduce(
+      (chart, department) => {
+        const nextOffset =
+          chart.offset +
+          (department.presentCount / totalDepartmentPresent) * 100;
+        return {
+          offset: nextOffset,
+          segments: [
+            ...chart.segments,
+            `${department.color} ${chart.offset}% ${nextOffset}%`,
+          ],
+        };
+      },
+      { offset: 0, segments: [] }
+    ).segments;
+  const departmentChartBackground = departmentChartSegments.length
+    ? `conic-gradient(${departmentChartSegments.join(", ")})`
+    : "conic-gradient(#e8eef4 0% 100%)";
 
   const exportReport = () => {
     const rows = [
@@ -353,7 +424,7 @@ function Attendance() {
               >
                 {availabilityStatuses.map((availabilityStatus) => <option key={availabilityStatus}>{availabilityStatus}</option>)}
               </select>
-              <span className="attendance-actions attendance-actions-compact">
+              <span className="attendance-actions">
                 <button
                   className="attendance-action-check-in"
                   type="button"
@@ -361,7 +432,8 @@ function Attendance() {
                   onClick={() => checkInEmployee(employee.id)}
                   aria-label={`Check in ${employee.name}`}
                 >
-                  <span aria-hidden="true">+</span>
+                  <i className="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i>
+                  <span>Check in</span>
                 </button>
                 <button
                   className="attendance-action-check-out"
@@ -370,7 +442,8 @@ function Attendance() {
                   onClick={() => checkOutEmployee(employee.id)}
                   aria-label={`Check out ${employee.name}`}
                 >
-                  <span aria-hidden="true">-</span>
+                  <i className="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+                  <span>Check out</span>
                 </button>
               </span>
             </div>;
@@ -443,18 +516,73 @@ function Attendance() {
           <h2><i className="fa-solid fa-chart-column" aria-hidden="true"></i>Weekly trend</h2>
           <span>Last 7 days</span>
         </div>
-        <div className="trend-bars attendance-trend-bars">
-          {getWeeklyTrend().map((day) => (
-            <div key={day.date} title={`${day.rate}% present`}>
-              <small className="attendance-trend-rate">{day.rate}%</small>
-              <span style={{ height: `${Math.max(day.rate, 3)}%` }}></span>
-              <small className="attendance-trend-day">{day.label}</small>
+        <div className="attendance-trend-content">
+          <div className="attendance-weekly-chart">
+            <div className="trend-bars attendance-trend-bars">
+              {weeklyTrend.map((day) => (
+                <div key={day.date} title={`${day.rate}% present`}>
+                  <small className="attendance-trend-rate">{day.rate}%</small>
+                  <span style={{ height: `${Math.max(day.rate, 3)}%` }}></span>
+                  <small className="attendance-trend-day">{day.label}</small>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="attendance-trend-legend">
-          <span><i aria-hidden="true"></i>Present or late</span>
-          <span>Daily attendance rate</span>
+            <div className="attendance-trend-legend">
+              <span><i aria-hidden="true"></i>Present or late</span>
+              <span>Daily attendance rate</span>
+            </div>
+          </div>
+
+          <div className="attendance-department-chart">
+            <h3>By department</h3>
+            {departmentAttendance.length ? (
+              <>
+                <div className="attendance-department-chart-content">
+                  <div
+                    className="attendance-department-donut"
+                    role="img"
+                    aria-label={`Department attendance for the last 7 days: ${departmentAttendance
+                      .map(
+                        (department) =>
+                          `${department.name}, ${department.presentCount} of ${department.eligibleCount} days, ${department.rate}%`
+                      )
+                      .join("; ")}`}
+                    style={{ background: departmentChartBackground }}
+                  >
+                    <div>
+                      <strong>{totalDepartmentPresent}</strong>
+                      <span>present</span>
+                    </div>
+                  </div>
+                  <ul className="attendance-department-legend">
+                    {departmentAttendance.map((department) => (
+                      <li key={department.name}>
+                        <span
+                          className="attendance-department-swatch"
+                          style={{ backgroundColor: department.color }}
+                          aria-hidden="true"
+                        ></span>
+                        <span className="attendance-department-name" title={department.name}>
+                          {department.name}
+                        </span>
+                        <strong>{department.rate}%</strong>
+                        <small>
+                          {department.presentCount}/{department.eligibleCount}
+                        </small>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="attendance-department-chart-note">
+                  Present or late marks / employee-days
+                </p>
+              </>
+            ) : (
+              <p className="attendance-department-empty">
+                No active employees to show.
+              </p>
+            )}
+          </div>
         </div>
       </section>
       <section className="workspace-panel workspace-panel-wide attendance-holidays-panel">

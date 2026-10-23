@@ -14,15 +14,17 @@ function PageSurface({ title, subtitle, icon, stats, children, actionLabel, onAc
         {actionLabel && <button className="workspace-action" type="button" onClick={onAction}>{actionLabel}</button>}
       </div>
 
-      <div className="workspace-stats">
-        {stats.map((stat) => (
-          <div className="workspace-stat" key={stat.label}>
-            <span>{stat.label}</span>
-            <strong>{stat.value}</strong>
-            <small className={stat.tone || "positive"}>{stat.note}</small>
-          </div>
-        ))}
-      </div>
+      {stats?.length > 0 && (
+        <div className="workspace-stats">
+          {stats.map((stat) => (
+            <div className="workspace-stat" key={stat.label}>
+              <span>{stat.label}</span>
+              <strong>{stat.value}</strong>
+              <small className={stat.tone || "positive"}>{stat.note}</small>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="workspace-grid">
         {children}

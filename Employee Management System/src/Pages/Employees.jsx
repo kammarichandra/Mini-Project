@@ -57,6 +57,7 @@ function Employees() {
   const [modalMode, setModalMode] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [employeeForm, setEmployeeForm] = useState(emptyEmployeeForm);
+  const [copiedEmployeeId, setCopiedEmployeeId] = useState(null);
 
   useEffect(() => {
     saveEmployeesToStorage(employees);
@@ -261,6 +262,24 @@ function Employees() {
     setSearchParams({});
   };
 
+  const copyEmployeeEmail = async (employee) => {
+    try {
+      await navigator.clipboard.writeText(employee.email);
+      setCopiedEmployeeId(employee.id);
+      window.setTimeout(() => {
+        setCopiedEmployeeId((currentId) =>
+          currentId === employee.id ? null : currentId
+        );
+      }, 1200);
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? `Unable to copy the email address: ${error.message}`
+          : "Unable to copy the email address. Please try again."
+      );
+    }
+  };
+
   return (
     <PageSurface
       title="Employees"
@@ -289,75 +308,87 @@ function Employees() {
         </div>
         
         {/* ================= SEARCH / FILTER ================= */}
-        {!isEmployee && <div className="filter-box">
+        {!isEmployee && (
+          <div className="filter-box">
 
-          <div className="search-box">
-            <span>⌕</span>
+            <div className="search-box">
+              <span>⌕</span>
 
-            <input
-              type="text"
-              placeholder="Search by name, ID, email, department, designation..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-
-          <select
-            value={department}
-            onChange={(event) => {
-              const nextParams = new URLSearchParams(searchParams);
-              if (event.target.value === "All Departments") {
-                nextParams.delete("department");
-              } else {
-                nextParams.set("department", event.target.value);
-              }
-              setSearchParams(nextParams);
-            }}
-          >
-            <option>All Departments</option>
-            {departmentOptions.map((departmentOption) => (
-              <option key={departmentOption}>{departmentOption}</option>
-            ))}
-          </select>
+              <input
+                type="text"
+                placeholder="Search by name, ID, email, department, designation..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
 
 
-          <select
-            value={status}
-            onChange={(event) => {
-              const nextParams = new URLSearchParams(searchParams);
-              if (event.target.value === "All Status") {
-                nextParams.delete("status");
-              } else {
-                nextParams.set("status", event.target.value);
-              }
-              setSearchParams(nextParams);
-            }}
-          >
-            <option>All Status</option>
-            <option>Active</option>
-            <option>On Leave</option>
-            <option>Other</option>
-          </select>
-
-
-          {hasActiveFilters && (
-            <button
-              className="clear-filters-btn"
-              type="button"
-              onClick={clearFilters}
+            <select
+              value={department}
+              onChange={(event) => {
+                const nextParams = new URLSearchParams(searchParams);
+                if (event.target.value === "All Departments") {
+                  nextParams.delete("department");
+                } else {
+                  nextParams.set("department", event.target.value);
+                }
+                setSearchParams(nextParams);
+              }}
             >
-              Clear filters
-            </button>
-          )}
+              <option>All Departments</option>
+              {departmentOptions.map((departmentOption) => (
+                <option key={departmentOption}>{departmentOption}</option>
+              ))}
+            </select>
 
-        </div>
+
+            <select
+              value={status}
+              onChange={(event) => {
+                const nextParams = new URLSearchParams(searchParams);
+                if (event.target.value === "All Status") {
+                  nextParams.delete("status");
+                } else {
+                  nextParams.set("status", event.target.value);
+                }
+                setSearchParams(nextParams);
+              }}
+            >
+              <option>All Status</option>
+              <option>Active</option>
+              <option>On Leave</option>
+              <option>Other</option>
+            </select>
 
 
-        /* ================= EMPLOYEE TABLE ================= */}
+            {hasActiveFilters && (
+              <button
+                className="clear-filters-btn"
+                type="button"
+                onClick={clearFilters}
+              >
+                Clear filters
+              </button>
+            )}
+
+          </div>
+        )}
+
+        {/* ================= EMPLOYEE TABLE ================= */}
         <div className="table-container">
 
           <table className="employee-directory-table">
+            <colgroup>
+              <col className="employee-select-column" />
+              <col className="employee-number-column" />
+              <col className="employee-name-column" />
+              <col className="employee-id-column" />
+              <col className="employee-department-column" />
+              <col className="employee-designation-column" />
+              <col className="employee-email-column" />
+              <col className="employee-status-column" />
+              <col className="employee-actions-column" />
+            </colgroup>
 
             <thead>
               <tr>
@@ -460,7 +491,32 @@ function Employees() {
                   <td>{employee.designation}</td>
 
                   <td className="email">
-                    {employee.email}
+                    <div className="employee-email">
+                      <span className="employee-email-address">
+                        {employee.email}
+                      </span>
+                      <button
+                        type="button"
+                        className="copy-email-btn"
+                        title={copiedEmployeeId === employee.id ? "Copied" : "Copy email"}
+                        aria-label={
+                          copiedEmployeeId === employee.id
+                            ? `Email copied for ${employee.name}`
+                            : `Copy email for ${employee.name}`
+                        }
+                        disabled={!employee.email}
+                        onClick={() => copyEmployeeEmail(employee)}
+                      >
+                        {copiedEmployeeId === employee.id ? (
+                          "✓"
+                        ) : (
+                          <svg viewBox="0 0 20 20" aria-hidden="true">
+                            <rect x="6.5" y="6.5" width="9" height="10" rx="1.5" />
+                            <path d="M12.5 4.5h-7A1.5 1.5 0 0 0 4 6v8" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
                   </td>
 
                   <td>
