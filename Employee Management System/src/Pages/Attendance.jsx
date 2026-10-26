@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import Modal from "../Components/Common/Modal";
 import PageSurface from "../Components/PageSurface";
 import { getCurrentUser, normalizeRole } from "../utils/auth";
 import {
@@ -65,6 +66,28 @@ function formatTime(date) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function getTimeInputValue(value = "") {
+  const match = value.match(/^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i);
+  if (!match) return "";
+
+  let hour = Number(match[1]);
+  const minute = Number(match[2]);
+  const meridiem = match[3]?.toUpperCase();
+  if (minute > 59 || hour > (meridiem ? 12 : 23) || (meridiem && hour === 0)) {
+    return "";
+  }
+  if (meridiem) hour = (hour % 12) + (meridiem === "PM" ? 12 : 0);
+
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function formatTimeInput(value) {
+  const [hour, minute] = value.split(":").map(Number);
+  const time = new Date();
+  time.setHours(hour, minute, 0, 0);
+  return formatTime(time);
+}
+
 function getCalendarDates(date) {
   const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
   const calendarStart = new Date(firstOfMonth);
@@ -91,6 +114,13 @@ function Attendance() {
   const [employees] = useState(getEmployeesFromStorage);
   const [attendanceHistory, setAttendanceHistory] = useState(getAttendanceHistory);
   const [employeeAvailability, setEmployeeAvailability] = useState(getAvailabilityStatuses);
+  const [attendanceModal, setAttendanceModal] = useState(null);
+  const [openActionsEmployeeId, setOpenActionsEmployeeId] = useState(null);
+  const [attendanceForm, setAttendanceForm] = useState({
+    status: "Not marked",
+    checkIn: "",
+    checkOut: "",
+  });
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const today = new Date(currentDate);
@@ -101,6 +131,7 @@ function Attendance() {
   const selectedDateKey = getDateKey(selectedDate);
   const selectedDateRecords = attendanceHistory[selectedDateKey] || {};
   const isSelectedDateToday = selectedDateKey === todayKey;
+  const isSelectedDateFuture = selectedDateKey > todayKey;
   const visibleEmployees = role === "Employee"
     ? employees.filter(
         (employee) =>
@@ -170,44 +201,69 @@ function Attendance() {
     }));
   };
 
-  const checkInEmployee = (employeeId) => {
+  const updateAttendanceRecord = (employeeId, record) => {
     setAttendanceHistory((current) => {
-      const currentDay = current[todayKey] || {};
-      const previousRecord = currentDay[employeeId] || {};
-      if (previousRecord.checkIn) return current;
+      const dayRecords = { ...(current[selectedDateKey] || {}) };
+      if (record) {
+        dayRecords[employeeId] = record;
+      } else {
+        delete dayRecords[employeeId];
+      }
 
-      return {
-        ...current,
-        [todayKey]: {
-          ...currentDay,
-          [employeeId]: {
-            ...previousRecord,
-            status: "Present",
-            checkIn: formatTime(new Date()),
-            checkOut: "",
-          },
-        },
-      };
+      const nextHistory = { ...current };
+      if (Object.keys(dayRecords).length) {
+        nextHistory[selectedDateKey] = dayRecords;
+      } else {
+        delete nextHistory[selectedDateKey];
+      }
+      return nextHistory;
     });
   };
 
-  const checkOutEmployee = (employeeId) => {
-    setAttendanceHistory((current) => {
-      const currentDay = current[todayKey] || {};
-      const previousRecord = currentDay[employeeId];
-      if (!previousRecord?.checkIn || previousRecord.checkOut) return current;
-
-      return {
-        ...current,
-        [todayKey]: {
-          ...currentDay,
-          [employeeId]: {
-            ...previousRecord,
-            checkOut: formatTime(new Date()),
-          },
-        },
-      };
+  const openAttendanceModal = (employee, mode) => {
+    const record = selectedDateRecords[employee.id] || {};
+    setAttendanceForm({
+      status: record.status || "Not marked",
+      checkIn: getTimeInputValue(record.checkIn),
+      checkOut: getTimeInputValue(record.checkOut),
     });
+    setAttendanceModal({ employee, mode });
+  };
+
+  const saveAttendance = () => {
+    const { status, checkIn, checkOut } = attendanceForm;
+    if (status === "Not marked" && !checkIn && !checkOut) {
+      updateAttendanceRecord(attendanceModal.employee.id, null);
+    } else {
+      updateAttendanceRecord(attendanceModal.employee.id, {
+        status: status === "Not marked" ? "" : status,
+        checkIn: checkIn ? formatTimeInput(checkIn) : "",
+        checkOut: checkOut ? formatTimeInput(checkOut) : "",
+      });
+    }
+    setAttendanceModal(null);
+  };
+
+  const setAttendanceStatus = (employeeId, status) => {
+    const record = selectedDateRecords[employeeId] || {};
+    updateAttendanceRecord(employeeId, {
+      ...record,
+      status,
+      ...(status === "Present"
+        ? { checkIn: record.checkIn || formatTime(new Date()) }
+        : {}),
+      ...(status === "Absent" ? { checkIn: "", checkOut: "" } : {}),
+    });
+  };
+
+  const deleteAttendance = (employee) => {
+    if (
+      window.confirm(
+        `Delete attendance for ${employee.name} on ${selectedDateLabel}?`
+      )
+    ) {
+      updateAttendanceRecord(employee.id, null);
+    }
   };
 
   const changeCalendarMonth = (monthOffset) => {
@@ -345,8 +401,8 @@ function Attendance() {
       className="attendance-page"
       title="Attendance"
       subtitle={role === "Employee"
-        ? "Manage your availability and check in or out for today."
-        : "Review attendance by date and check in or out for your team."}
+        ? "Review your attendance and manage your availability."
+        : "Review attendance by date and update your team's records."}
       icon="fa-calendar-check"
       actionLabel="Export Report"
       onAction={exportReport}
@@ -384,9 +440,9 @@ function Attendance() {
             <small>{presentCount} of {activeEmployees.length} active employees present today</small>
           </div>
         </div> */}
-        {!isSelectedDateToday && <p className="attendance-date-note">Viewing a previous or future date. Check-in and check-out are available for today.</p>}
+        {!isSelectedDateToday && <p className="attendance-date-note">Viewing attendance for a different date.</p>}
         {visibleEmployees.length ? <div className="mini-table attendance-table">
-          <div className="attendance-table-head"><b>Employee</b><b>Department</b><b>Check-in</b><b>Check-out</b><b>Availability</b><b>Actions</b></div>
+          <div className="attendance-table-head"><b>Employee</b><b>Department</b><b>Check-in</b><b>Check-out</b><b>Status</b><b>Availability</b><b>Actions</b></div>
           {visibleEmployees.map((employee) => {
             const record = selectedDateRecords[employee.id];
             const availability = employeeAvailability[employee.id] || "Keep available";
@@ -415,6 +471,9 @@ function Attendance() {
                 <i className="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
                 {record?.checkOut || "Not checked out"}
               </span>
+              <span className={`attendance-record-status attendance-record-status-${(record?.status || "not-marked").toLowerCase().replaceAll(" ", "-")}`}>
+                {record?.status || "Not marked"}
+              </span>
               <select
                 className={`attendance-status attendance-status-${availability.toLowerCase().replaceAll(" ", "-")}`}
                 aria-label={`Availability for ${employee.name}`}
@@ -424,28 +483,77 @@ function Attendance() {
               >
                 {availabilityStatuses.map((availabilityStatus) => <option key={availabilityStatus}>{availabilityStatus}</option>)}
               </select>
-              <span className="attendance-actions">
+              <div className="attendance-actions">
                 <button
-                  className="attendance-action-check-in"
+                  className="attendance-action-present"
                   type="button"
-                  disabled={!isSelectedDateToday || employee.status === "On Leave" || Boolean(record?.checkIn)}
-                  onClick={() => checkInEmployee(employee.id)}
-                  aria-label={`Check in ${employee.name}`}
+                  disabled={isSelectedDateFuture || employee.status === "On Leave"}
+                  onClick={() => setAttendanceStatus(employee.id, "Present")}
+                  aria-label={`Mark ${employee.name} present`}
+                  title="Mark present"
                 >
-                  <i className="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i>
-                  <span>Check in</span>
+                  <i className="fa-solid fa-plus" aria-hidden="true"></i>
                 </button>
                 <button
-                  className="attendance-action-check-out"
+                  className="attendance-action-absent"
                   type="button"
-                  disabled={!isSelectedDateToday || employee.status === "On Leave" || !record?.checkIn || Boolean(record?.checkOut)}
-                  onClick={() => checkOutEmployee(employee.id)}
-                  aria-label={`Check out ${employee.name}`}
+                  disabled={isSelectedDateFuture || employee.status === "On Leave"}
+                  onClick={() => setAttendanceStatus(employee.id, "Absent")}
+                  aria-label={`Mark ${employee.name} absent`}
+                  title="Mark absent"
                 >
-                  <i className="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
-                  <span>Check out</span>
+                  <i className="fa-solid fa-minus" aria-hidden="true"></i>
                 </button>
-              </span>
+                <button
+                  className="attendance-action-view"
+                  type="button"
+                  onClick={() => openAttendanceModal(employee, "view")}
+                  aria-label={`View attendance for ${employee.name}`}
+                  title="View attendance"
+                >
+                  <i className="fa-solid fa-eye" aria-hidden="true"></i>
+                </button>
+                <div className="attendance-more-wrap">
+                  <button
+                    className="attendance-action-more"
+                    type="button"
+                    aria-label={`More attendance actions for ${employee.name}`}
+                    aria-expanded={openActionsEmployeeId === employee.id}
+                    title="More actions"
+                    onClick={() => setOpenActionsEmployeeId((current) => (
+                      current === employee.id ? null : employee.id
+                    ))}
+                  >
+                    <i className="fa-solid fa-ellipsis" aria-hidden="true"></i>
+                  </button>
+                  {openActionsEmployeeId === employee.id && (
+                    <div className="attendance-action-menu" role="group" aria-label={`More actions for ${employee.name}`}>
+                      <button
+                        type="button"
+                        disabled={isSelectedDateFuture || employee.status === "On Leave"}
+                        onClick={() => {
+                          setOpenActionsEmployeeId(null);
+                          openAttendanceModal(employee, "edit");
+                        }}
+                      >
+                        <i className="fa-solid fa-pen" aria-hidden="true"></i>
+                        Edit attendance
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isSelectedDateFuture || employee.status === "On Leave"}
+                        onClick={() => {
+                          setOpenActionsEmployeeId(null);
+                          deleteAttendance(employee);
+                        }}
+                      >
+                        <i className="fa-solid fa-trash" aria-hidden="true"></i>
+                        Delete attendance
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>;
           })}
         </div> : <p className="panel-note attendance-empty">
@@ -609,6 +717,67 @@ function Attendance() {
           })}
         </ul>
       </section>
+      <Modal
+        show={Boolean(attendanceModal)}
+        title={attendanceModal?.mode === "edit" ? "Edit attendance" : "Attendance details"}
+        onClose={() => setAttendanceModal(null)}
+        onSave={saveAttendance}
+        saveLabel="Save attendance"
+        showSave={attendanceModal?.mode === "edit"}
+      >
+        {attendanceModal && (
+          <div className="attendance-record-details">
+            <p><strong>Employee:</strong> {attendanceModal.employee.name}</p>
+            <p><strong>Date:</strong> {selectedDateLabel}</p>
+            {attendanceModal.mode === "edit" ? (
+              <>
+                <label className="form-label" htmlFor="attendance-record-status">Status</label>
+                <select
+                  className="form-select mb-3"
+                  id="attendance-record-status"
+                  value={attendanceForm.status}
+                  onChange={(event) => setAttendanceForm((current) => ({
+                    ...current,
+                    status: event.target.value,
+                  }))}
+                >
+                  {["Not marked", "Present", "Late", "Absent"].map((status) => (
+                    <option key={status}>{status}</option>
+                  ))}
+                </select>
+                <label className="form-label" htmlFor="attendance-record-check-in">Check-in</label>
+                <input
+                  className="form-control mb-3"
+                  id="attendance-record-check-in"
+                  type="time"
+                  value={attendanceForm.checkIn}
+                  onChange={(event) => setAttendanceForm((current) => ({
+                    ...current,
+                    checkIn: event.target.value,
+                  }))}
+                />
+                <label className="form-label" htmlFor="attendance-record-check-out">Check-out</label>
+                <input
+                  className="form-control"
+                  id="attendance-record-check-out"
+                  type="time"
+                  value={attendanceForm.checkOut}
+                  onChange={(event) => setAttendanceForm((current) => ({
+                    ...current,
+                    checkOut: event.target.value,
+                  }))}
+                />
+              </>
+            ) : (
+              <>
+                <p><strong>Status:</strong> {selectedDateRecords[attendanceModal.employee.id]?.status || "Not marked"}</p>
+                <p><strong>Check-in:</strong> {selectedDateRecords[attendanceModal.employee.id]?.checkIn || "Not checked in"}</p>
+                <p><strong>Check-out:</strong> {selectedDateRecords[attendanceModal.employee.id]?.checkOut || "Not checked out"}</p>
+              </>
+            )}
+          </div>
+        )}
+      </Modal>
     </PageSurface>
   );
 }
