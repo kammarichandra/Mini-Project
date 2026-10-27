@@ -7,6 +7,7 @@ export const roles = [
   "Manager",
   "Employee",
   "Finance",
+  "Payroll",
   "Recruiter",
 ];
 
@@ -45,6 +46,7 @@ const roleAccess = {
     "/reports",
     "/attendance",
   ],
+  Payroll: ["/payroll"],
   Recruiter: [
     "/dashboard",
     "/candidates",
@@ -60,6 +62,7 @@ const roleHomePaths = {
   Manager: "/dashboard",
   Employee: "/dashboard",
   Finance: "/dashboard",
+  Payroll: "/payroll",
   Recruiter: "/dashboard",
 };
 
@@ -124,6 +127,12 @@ export function hasRoleAccess(role, path) {
   if (normalizedPath === "/welcome") return true;
   const allowedPaths = roleAccess[normalizedRole] || [];
   return allowedPaths.includes("*") || allowedPaths.includes(normalizedPath);
+}
+
+export function hasPayrollManagementAccess(role) {
+  return ["Super Admin", "HR Admin", "Finance", "Payroll"].includes(
+    normalizeRole(role)
+  );
 }
 
 export function getRoleHomePath(role) {

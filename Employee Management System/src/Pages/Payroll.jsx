@@ -8,7 +8,11 @@ import {
   getEmployeesFromStorage,
 } from "../utils/employees";
 import { downloadPayslipPdf } from "../utils/payslipPdf";
-import { getCurrentUser, normalizeRole } from "../utils/auth";
+import {
+  getCurrentUser,
+  hasPayrollManagementAccess,
+  normalizeRole,
+} from "../utils/auth";
 import {
   getPayrollRecord,
   getPayrollRecordsFromStorage,
@@ -41,7 +45,7 @@ function Payroll() {
   const currentUser = getCurrentUser();
   const role = normalizeRole(currentUser?.role);
   const isEmployee = role === "Employee";
-  const canManagePayroll = ["Super Admin", "HR Admin", "Finance"].includes(role);
+  const canManagePayroll = hasPayrollManagementAccess(role);
   const [employees] = useState(getEmployeesFromStorage);
   const [payrollRecords, setPayrollRecords] = useState(getPayrollRecordsFromStorage);
   const [period, setPeriod] = useState(getCurrentPeriod);
@@ -84,20 +88,6 @@ function Payroll() {
           }))
           .filter((record) => record.status === "Processed")
       ).sort((first, second) => second.period.localeCompare(first.period))
-    : [];
-  const adminPayslips = canManagePayroll
-    ? employees.flatMap((employee) =>
-        Object.keys(payrollRecords)
-          .map((recordPeriod) => ({
-            employee,
-            period: recordPeriod,
-            ...getPayrollRecord(payrollRecords, recordPeriod, employee.id),
-          }))
-          .filter((record) => record.status === "Processed")
-      ).sort((first, second) =>
-        second.period.localeCompare(first.period) ||
-        first.employee.name.localeCompare(second.employee.name)
-      )
     : [];
   const processedCount = isEmployee
     ? employeePayslips.length

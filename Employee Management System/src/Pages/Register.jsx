@@ -97,6 +97,11 @@ function Register() {
                     {roles.map((role) => <option key={role} value={role}>{role}</option>)}
                   </select>
                 </div>
+                {form.role === "Payroll" && (
+                  <small className="register-role-hint">
+                    Manage employee salaries, deductions, payroll processing, and payslips.
+                  </small>
+                )}
               </label>
 
               <label className="register-field">

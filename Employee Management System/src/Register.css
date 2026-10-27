@@ -144,6 +144,14 @@
   color: #9aadc4;
 }
 
+.register-role-hint {
+  display: block;
+  margin-top: 5px;
+  color: #567392;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
 .terms-check {
   display: flex;
   align-items: center;

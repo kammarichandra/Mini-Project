@@ -104,6 +104,40 @@ function isSameDate(first, second) {
   return getDateKey(first) === getDateKey(second);
 }
 
+function getMinutes(value) {
+  const time = getTimeInputValue(value);
+  if (!time) return null;
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function getDurationMinutes(start, end) {
+  const startMinutes = getMinutes(start);
+  const endMinutes = getMinutes(end);
+  if (startMinutes === null || endMinutes === null) return null;
+  return endMinutes >= startMinutes
+    ? endMinutes - startMinutes
+    : endMinutes + 24 * 60 - startMinutes;
+}
+
+function formatDuration(minutes) {
+  if (minutes === null) return "—";
+  return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, "0")}m`;
+}
+
+function getMonthDateKeys(month, lastDate) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  if (!year || !monthNumber) return [];
+  const lastDay = new Date(year, monthNumber, 0).getDate();
+  const visibleLastDay = month === lastDate.slice(0, 7)
+    ? Number(lastDate.slice(-2))
+    : lastDay;
+
+  return Array.from({ length: visibleLastDay }, (_, index) =>
+    `${month}-${String(index + 1).padStart(2, "0")}`
+  );
+}
+
 function csvValue(value) {
   return `"${String(value).replaceAll('"', '""')}"`;
 }
@@ -120,6 +154,8 @@ function Attendance() {
     status: "Not marked",
     checkIn: "",
     checkOut: "",
+    lunchStart: "",
+    lunchEnd: "",
   });
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [currentDate, setCurrentDate] = useState(() => new Date());
@@ -127,6 +163,13 @@ function Attendance() {
   today.setHours(0, 0, 0, 0);
   const todayKey = getDateKey(today);
   const todayHoliday = getHolidayForDate(today);
+  const isAdmin = ["Super Admin", "HR Admin"].includes(role);
+  const [adminMonth, setAdminMonth] = useState(() => todayKey.slice(0, 7));
+  const [adminSearch, setAdminSearch] = useState("");
+  const [adminDepartment, setAdminDepartment] = useState("All Departments");
+  const [adminStatus, setAdminStatus] = useState("All Status");
+  const [adminPage, setAdminPage] = useState(1);
+  const adminPageSize = 10;
   const todayRecords = attendanceHistory[todayKey] || {};
   const selectedDateKey = getDateKey(selectedDate);
   const selectedDateRecords = attendanceHistory[selectedDateKey] || {};
@@ -201,9 +244,9 @@ function Attendance() {
     }));
   };
 
-  const updateAttendanceRecord = (employeeId, record) => {
+  const updateAttendanceRecord = (employeeId, record, dateKey = selectedDateKey) => {
     setAttendanceHistory((current) => {
-      const dayRecords = { ...(current[selectedDateKey] || {}) };
+      const dayRecords = { ...(current[dateKey] || {}) };
       if (record) {
         dayRecords[employeeId] = record;
       } else {
@@ -212,57 +255,71 @@ function Attendance() {
 
       const nextHistory = { ...current };
       if (Object.keys(dayRecords).length) {
-        nextHistory[selectedDateKey] = dayRecords;
+        nextHistory[dateKey] = dayRecords;
       } else {
-        delete nextHistory[selectedDateKey];
+        delete nextHistory[dateKey];
       }
       return nextHistory;
     });
   };
 
-  const openAttendanceModal = (employee, mode) => {
-    const record = selectedDateRecords[employee.id] || {};
+  const openAttendanceModal = (employee, mode, date = selectedDate) => {
+    const dateKey = getDateKey(date);
+    const record = attendanceHistory[dateKey]?.[employee.id] || {};
+    setSelectedDate(date);
     setAttendanceForm({
       status: record.status || "Not marked",
       checkIn: getTimeInputValue(record.checkIn),
       checkOut: getTimeInputValue(record.checkOut),
+      lunchStart: getTimeInputValue(record.lunchStart),
+      lunchEnd: getTimeInputValue(record.lunchEnd),
     });
-    setAttendanceModal({ employee, mode });
+    setAttendanceModal({ employee, mode, dateKey });
   };
 
   const saveAttendance = () => {
-    const { status, checkIn, checkOut } = attendanceForm;
-    if (status === "Not marked" && !checkIn && !checkOut) {
-      updateAttendanceRecord(attendanceModal.employee.id, null);
+    const { status, checkIn, checkOut, lunchStart, lunchEnd } = attendanceForm;
+    if (status === "Not marked" && !checkIn && !checkOut && !lunchStart && !lunchEnd) {
+      updateAttendanceRecord(attendanceModal.employee.id, null, attendanceModal.dateKey);
     } else {
       updateAttendanceRecord(attendanceModal.employee.id, {
         status: status === "Not marked" ? "" : status,
         checkIn: checkIn ? formatTimeInput(checkIn) : "",
         checkOut: checkOut ? formatTimeInput(checkOut) : "",
-      });
+        lunchStart: lunchStart ? formatTimeInput(lunchStart) : "",
+        lunchEnd: lunchEnd ? formatTimeInput(lunchEnd) : "",
+      }, attendanceModal.dateKey);
     }
     setAttendanceModal(null);
   };
 
-  const setAttendanceStatus = (employeeId, status) => {
-    const record = selectedDateRecords[employeeId] || {};
+  const setAttendanceStatus = (employeeId, status, dateKey = selectedDateKey) => {
+    const record = attendanceHistory[dateKey]?.[employeeId] || {};
     updateAttendanceRecord(employeeId, {
       ...record,
       status,
-      ...(status === "Present"
+      ...(status === "Present" && dateKey === todayKey
         ? { checkIn: record.checkIn || formatTime(new Date()) }
         : {}),
-      ...(status === "Absent" ? { checkIn: "", checkOut: "" } : {}),
-    });
+      ...(status === "Absent"
+        ? { checkIn: "", checkOut: "", lunchStart: "", lunchEnd: "" }
+        : {}),
+    }, dateKey);
   };
 
-  const deleteAttendance = (employee) => {
+  const deleteAttendance = (employee, dateKey = selectedDateKey) => {
+    const dateLabel = new Date(`${dateKey}T00:00:00`).toLocaleDateString(undefined, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
     if (
       window.confirm(
-        `Delete attendance for ${employee.name} on ${selectedDateLabel}?`
+        `Delete attendance for ${employee.name} on ${dateLabel}?`
       )
     ) {
-      updateAttendanceRecord(employee.id, null);
+      updateAttendanceRecord(employee.id, null, dateKey);
     }
   };
 
@@ -375,7 +432,94 @@ function Attendance() {
     ? `conic-gradient(${departmentChartSegments.join(", ")})`
     : "conic-gradient(#e8eef4 0% 100%)";
 
+  const adminRows = getMonthDateKeys(adminMonth, todayKey).flatMap((dateKey) =>
+    visibleEmployees.map((employee) => {
+      const record = attendanceHistory[dateKey]?.[employee.id] || {};
+      const status = employee.status === "On Leave"
+        ? "On leave"
+        : record.status || "Not marked";
+      const lunchMinutes = getDurationMinutes(record.lunchStart, record.lunchEnd);
+      const elapsedMinutes = getDurationMinutes(record.checkIn, record.checkOut);
+      const workingMinutes = elapsedMinutes === null
+        ? null
+        : Math.max(elapsedMinutes - (lunchMinutes || 0), 0);
+
+      return {
+        dateKey,
+        employee,
+        record,
+        status,
+        beforeLunch: formatDuration(getDurationMinutes(record.checkIn, record.lunchStart)),
+        lunchBreak: formatDuration(lunchMinutes),
+        afterLunch: formatDuration(getDurationMinutes(record.lunchEnd, record.checkOut)),
+        workingHours: formatDuration(workingMinutes),
+        workingMinutes,
+      };
+    })
+  );
+  const filteredAdminRows = adminRows.filter(({ employee, status }) => {
+    const searchTerm = adminSearch.trim().toLowerCase();
+    const matchesSearch = !searchTerm || [
+      employee.name,
+      employee.id,
+      employee.department,
+    ].some((value) => String(value).toLowerCase().includes(searchTerm));
+    const matchesDepartment = adminDepartment === "All Departments" ||
+      employee.department === adminDepartment;
+    const matchesStatus = adminStatus === "All Status" || status === adminStatus;
+    return matchesSearch && matchesDepartment && matchesStatus;
+  });
+  const adminPageCount = Math.max(1, Math.ceil(filteredAdminRows.length / adminPageSize));
+  const visibleAdminRows = filteredAdminRows.slice(
+    (adminPage - 1) * adminPageSize,
+    adminPage * adminPageSize
+  );
+  const adminTotalWorkMinutes = adminRows.reduce(
+    (total, row) => total + (row.workingMinutes || 0),
+    0
+  );
+  const adminWorkingDays = new Set(
+    adminRows
+      .filter((row) => ["Present", "Late"].includes(row.status))
+      .map((row) => row.dateKey)
+  ).size;
+  const adminWorkedRows = adminRows.filter((row) => row.workingMinutes !== null);
+  const adminTotalLunchMinutes = adminRows.reduce(
+    (total, row) => total + (getMinutes(row.record.lunchEnd) !== null
+      ? getDurationMinutes(row.record.lunchStart, row.record.lunchEnd) || 0
+      : 0),
+    0
+  );
+
   const exportReport = () => {
+    if (isAdmin) {
+      const rows = [
+        ["Date", "Employee", "Employee ID", "Department", "Login Time", "Before Lunch", "Lunch Break", "After Lunch", "Logout Time", "Total Working Hours", "Status"],
+        ...filteredAdminRows.map(({ dateKey, employee, record, beforeLunch, lunchBreak, afterLunch, workingHours, status }) => [
+          dateKey,
+          employee.name,
+          employee.id,
+          employee.department,
+          record.checkIn || "",
+          beforeLunch,
+          lunchBreak,
+          afterLunch,
+          record.checkOut || "",
+          workingHours,
+          status,
+        ]),
+      ];
+      const csv = rows.map((row) => row.map(csvValue).join(",")).join("\n");
+      const file = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const downloadUrl = URL.createObjectURL(file);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = downloadUrl;
+      downloadLink.download = `attendance-${adminMonth}.csv`;
+      downloadLink.click();
+      URL.revokeObjectURL(downloadUrl);
+      return;
+    }
+
     const rows = [
       ["Employee ID", "Employee", "Department", "Date", "Check-in", "Check-out", "Status"],
       ...visibleEmployees.map((employee) => {
@@ -406,13 +550,206 @@ function Attendance() {
       icon="fa-calendar-check"
       actionLabel="Export Report"
       onAction={exportReport}
-      stats={[
+      stats={isAdmin ? [
+        { label: "Total working hours", value: formatDuration(adminTotalWorkMinutes), note: `For ${adminMonth}` },
+        { label: "Total working days", value: adminWorkingDays, note: "Days with present or late records" },
+        { label: "Average daily hours", value: formatDuration(adminWorkedRows.length ? Math.round(adminTotalWorkMinutes / adminWorkedRows.length) : 0), note: "Per employee workday with times" },
+        { label: "Total lunch break", value: formatDuration(adminTotalLunchMinutes), note: "From saved lunch times" },
+      ] : [
         { label: "Present today", value: presentCount, note: `of ${activeEmployees.length} active employees` },
         { label: "On leave", value: onLeaveCount, note: "Employee directory", tone: "warning" },
         { label: "Late arrivals", value: lateCount, note: "Marked today" },
         { label: "Attendance rate", value: `${attendanceRate}%`, note: "Present or late" },
       ]}
     >
+      {isAdmin ? (
+        <section className="workspace-panel workspace-panel-wide attendance-admin-panel">
+          <div className="attendance-admin-filters">
+            <label>
+              <span className="visually-hidden">Attendance month</span>
+              <input
+                type="month"
+                value={adminMonth}
+                max={todayKey.slice(0, 7)}
+                onChange={(event) => {
+                  setAdminMonth(event.target.value);
+                  setAdminPage(1);
+                }}
+              />
+            </label>
+            <label className="attendance-admin-search">
+              <span className="visually-hidden">Search by employee name or ID</span>
+              <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              <input
+                type="search"
+                placeholder="Search by employee name or ID..."
+                value={adminSearch}
+                onChange={(event) => {
+                  setAdminSearch(event.target.value);
+                  setAdminPage(1);
+                }}
+              />
+            </label>
+            <label>
+              <span className="visually-hidden">Filter by department</span>
+              <select
+                value={adminDepartment}
+                onChange={(event) => {
+                  setAdminDepartment(event.target.value);
+                  setAdminPage(1);
+                }}
+              >
+                <option>All Departments</option>
+                {[...new Set(visibleEmployees.map((employee) => employee.department))]
+                  .sort((first, second) => first.localeCompare(second))
+                  .map((department) => <option key={department}>{department}</option>)}
+              </select>
+            </label>
+            <label>
+              <span className="visually-hidden">Filter by attendance status</span>
+              <select
+                value={adminStatus}
+                onChange={(event) => {
+                  setAdminStatus(event.target.value);
+                  setAdminPage(1);
+                }}
+              >
+                {["All Status", "Present", "Late", "Absent", "On leave", "Not marked"]
+                  .map((status) => <option key={status}>{status}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div className="attendance-admin-table-heading">
+            <h2>Daily attendance</h2>
+            <span>{new Date(`${adminMonth}-01T00:00:00`).toLocaleDateString(undefined, {
+              month: "long",
+              year: "numeric",
+            })}</span>
+          </div>
+
+          {visibleEmployees.length ? (
+            <div className="attendance-admin-table-wrap">
+              <table className="attendance-admin-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Date</th>
+                    <th>Employee</th>
+                    <th>Employee ID</th>
+                    <th>Login time</th>
+                    <th>Before lunch</th>
+                    <th>Lunch break</th>
+                    <th>After lunch</th>
+                    <th>Logout time</th>
+                    <th>Total working hours</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleAdminRows.length ? visibleAdminRows.map((row, index) => {
+                    const rowIsFuture = row.dateKey > todayKey;
+                    const statusClass = row.status.toLowerCase().replaceAll(" ", "-");
+                    return (
+                      <tr key={`${row.dateKey}-${row.employee.id}`}>
+                        <td>{(adminPage - 1) * adminPageSize + index + 1}</td>
+                        <td>{new Date(`${row.dateKey}T00:00:00`).toLocaleDateString(undefined, {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          weekday: "short",
+                        })}</td>
+                        <td className="attendance-admin-employee">{row.employee.name}</td>
+                        <td>{row.employee.id}</td>
+                        <td>{row.record.checkIn || "—"}</td>
+                        <td>{row.beforeLunch}</td>
+                        <td>{row.lunchBreak}</td>
+                        <td>{row.afterLunch}</td>
+                        <td>{row.record.checkOut || "—"}</td>
+                        <td className="attendance-admin-hours">{row.workingHours}</td>
+                        <td>
+                          <select
+                            className={`attendance-admin-status attendance-admin-status-${statusClass}`}
+                            aria-label={`Attendance status for ${row.employee.name} on ${row.dateKey}`}
+                            value={row.status}
+                            disabled={rowIsFuture || row.status === "On leave"}
+                            onChange={(event) => {
+                              setAttendanceStatus(
+                                row.employee.id,
+                                event.target.value,
+                                row.dateKey
+                              );
+                              setAdminPage(1);
+                            }}
+                          >
+                            {["Not marked", "Present", "Late", "Absent", "On leave"].map((status) => (
+                              <option key={status}>{status}</option>
+                            ))}
+                          </select>
+                        </td>
+                        {/* <td>
+                          <button
+                            className="attendance-admin-edit"
+                            type="button"
+                            aria-label={`Edit ${row.employee.name}'s attendance for ${row.dateKey}`}
+                            disabled={rowIsFuture || row.status === "On leave"}
+                            onClick={() => openAttendanceModal(
+                              row.employee,
+                              "edit",
+                              new Date(`${row.dateKey}T00:00:00`)
+                            )}
+                          >
+                            <i className="fa-solid fa-pen" aria-hidden="true"></i>
+                            <span>Edit</span>
+                          </button>
+                        </td> */}
+                      </tr>
+                    );
+                  }) : (
+                    <tr>
+                      <td colSpan="12" className="attendance-admin-empty">
+                        No attendance records match these filters.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="attendance-admin-empty">
+              No employee records yet. <Link to="/Employees">Open the employee directory</Link> to add your team.
+            </p>
+          )}
+
+          <div className="attendance-admin-pagination">
+            <span>
+              Showing {filteredAdminRows.length
+                ? (adminPage - 1) * adminPageSize + 1
+                : 0}–{Math.min(adminPage * adminPageSize, filteredAdminRows.length)} of {filteredAdminRows.length} records
+            </span>
+            <div>
+              <button
+                type="button"
+                aria-label="Previous attendance page"
+                disabled={adminPage === 1}
+                onClick={() => setAdminPage((page) => Math.max(1, page - 1))}
+              >
+                <i className="fa-solid fa-chevron-left" aria-hidden="true"></i>
+              </button>
+              <span>{adminPage} / {adminPageCount}</span>
+              <button
+                type="button"
+                aria-label="Next attendance page"
+                disabled={adminPage >= adminPageCount}
+                onClick={() => setAdminPage((page) => Math.min(adminPageCount, page + 1))}
+              >
+                <i className="fa-solid fa-chevron-right" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <>
       <section className="workspace-panel workspace-panel-wide attendance-main-panel">
         {todayHoliday && (
           <div className="attendance-holiday-alert" role="status">
@@ -717,6 +1054,8 @@ function Attendance() {
           })}
         </ul>
       </section>
+        </>
+      )}
       <Modal
         show={Boolean(attendanceModal)}
         title={attendanceModal?.mode === "edit" ? "Edit attendance" : "Attendance details"}
@@ -728,7 +1067,12 @@ function Attendance() {
         {attendanceModal && (
           <div className="attendance-record-details">
             <p><strong>Employee:</strong> {attendanceModal.employee.name}</p>
-            <p><strong>Date:</strong> {selectedDateLabel}</p>
+            <p><strong>Date:</strong> {new Date(`${attendanceModal.dateKey}T00:00:00`).toLocaleDateString(undefined, {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}</p>
             {attendanceModal.mode === "edit" ? (
               <>
                 <label className="form-label" htmlFor="attendance-record-status">Status</label>
@@ -767,12 +1111,34 @@ function Attendance() {
                     checkOut: event.target.value,
                   }))}
                 />
+                <label className="form-label" htmlFor="attendance-record-lunch-start">Lunch break starts</label>
+                <input
+                  className="form-control mb-3"
+                  id="attendance-record-lunch-start"
+                  type="time"
+                  value={attendanceForm.lunchStart}
+                  onChange={(event) => setAttendanceForm((current) => ({
+                    ...current,
+                    lunchStart: event.target.value,
+                  }))}
+                />
+                <label className="form-label" htmlFor="attendance-record-lunch-end">Lunch break ends</label>
+                <input
+                  className="form-control"
+                  id="attendance-record-lunch-end"
+                  type="time"
+                  value={attendanceForm.lunchEnd}
+                  onChange={(event) => setAttendanceForm((current) => ({
+                    ...current,
+                    lunchEnd: event.target.value,
+                  }))}
+                />
               </>
             ) : (
               <>
-                <p><strong>Status:</strong> {selectedDateRecords[attendanceModal.employee.id]?.status || "Not marked"}</p>
-                <p><strong>Check-in:</strong> {selectedDateRecords[attendanceModal.employee.id]?.checkIn || "Not checked in"}</p>
-                <p><strong>Check-out:</strong> {selectedDateRecords[attendanceModal.employee.id]?.checkOut || "Not checked out"}</p>
+                <p><strong>Status:</strong> {attendanceHistory[attendanceModal.dateKey]?.[attendanceModal.employee.id]?.status || "Not marked"}</p>
+                <p><strong>Check-in:</strong> {attendanceHistory[attendanceModal.dateKey]?.[attendanceModal.employee.id]?.checkIn || "Not checked in"}</p>
+                <p><strong>Check-out:</strong> {attendanceHistory[attendanceModal.dateKey]?.[attendanceModal.employee.id]?.checkOut || "Not checked out"}</p>
               </>
             )}
           </div>
