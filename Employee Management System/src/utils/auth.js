@@ -10,7 +10,7 @@ export const roles = [
   "Payroll",
   "Recruiter",
 ];
-
+ 
 const roleAliases = {
   Admin: "Super Admin",
   HR: "HR Admin",
@@ -46,7 +46,14 @@ const roleAccess = {
     "/reports",
     "/attendance",
   ],
-  Payroll: ["/payroll"],
+  Payroll: [
+    "/dashboard",
+    "/payroll",
+    "/settings",
+    "/attendance",
+    "/leave_management"
+
+  ],
   Recruiter: [
     "/dashboard",
     "/candidates",
