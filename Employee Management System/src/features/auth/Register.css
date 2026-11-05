@@ -293,6 +293,128 @@
   font-size: 8px;
 }
 
+.register-terms-backdrop {
+  position: fixed;
+  z-index: 1100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(10, 28, 52, 0.58);
+  backdrop-filter: blur(3px);
+}
+
+.register-terms-dialog {
+  display: flex;
+  width: min(620px, 100%);
+  max-height: min(720px, 90vh);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #dce7f3;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(8, 35, 69, 0.28);
+}
+
+.register-terms-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 26px 18px;
+  border-bottom: 1px solid #e8eef5;
+}
+
+.register-terms-header span {
+  color: #3974c6;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.register-terms-header h2 {
+  margin: 6px 0 0;
+  color: #12355e;
+  font-size: 22px;
+}
+
+.register-terms-close {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #e0e8f1;
+  border-radius: 8px;
+  background: #fff;
+  color: #526b87;
+  cursor: pointer;
+}
+
+.register-terms-close:hover,
+.register-terms-secondary:hover {
+  background: #f3f7fc;
+}
+
+.register-terms-content {
+  overflow-y: auto;
+  padding: 20px 26px 24px;
+  color: #536981;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.register-terms-content p {
+  margin: 0 0 16px;
+}
+
+.register-terms-content .register-terms-intro {
+  color: #334e6b;
+  font-size: 14px;
+}
+
+.register-terms-content h3 {
+  margin: 18px 0 6px;
+  color: #183b63;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.register-terms-footer {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 26px;
+  border-top: 1px solid #e8eef5;
+  background: #fbfcfe;
+}
+
+.register-terms-secondary,
+.register-terms-accept {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid #d6e1ee;
+  border-radius: 7px;
+  background: #fff;
+  color: #3e5874;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.register-terms-accept {
+  border-color: #1764e8;
+  background: #1764e8;
+  color: #fff;
+}
+
+.register-terms-accept:hover {
+  background: #0d56d2;
+}
+
 @media (max-width: 700px) {
   .register-main {
     padding: 20px 14px 30px;
@@ -317,5 +439,21 @@
   .visual-photo-wrap {
     margin-top: 46px;
     margin-right: 28px;
+  }
+
+  .register-terms-backdrop {
+    padding: 12px;
+  }
+
+  .register-terms-header {
+    padding: 18px 18px 15px;
+  }
+
+  .register-terms-content {
+    padding: 16px 18px 20px;
+  }
+
+  .register-terms-footer {
+    padding: 12px 18px;
   }
 }

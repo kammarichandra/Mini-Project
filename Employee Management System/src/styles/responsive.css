@@ -214,6 +214,16 @@
   text-overflow: ellipsis;
 }
 
+.attendance-admin-employee span {
+  cursor: help;
+}
+
+.attendance-admin-employee span:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid #2785d2;
+  outline-offset: 2px;
+}
+
 .attendance-admin-hours {
   color: #168152 !important;
   font-weight: 700;
@@ -346,4 +356,3 @@
     flex-direction: column;
   }
 }
-

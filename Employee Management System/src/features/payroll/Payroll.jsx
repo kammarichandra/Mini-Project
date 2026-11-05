@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "./Payroll.css";
 import PageSurface from "@/shared/components/PageSurface";
+import { createCsvContent, downloadCsv } from "@/shared/utils/csv";
 import {
   getDepartmentAvatarStyle,
   getDepartmentTagStyle,
@@ -45,7 +46,28 @@ function Payroll() {
   const currentUser = getCurrentUser();
   const role = normalizeRole(currentUser?.role);
   const isEmployee = role === "Employee";
+  const isPayrollRole = role === "Payroll";
   const canManagePayroll = hasPayrollManagementAccess(role);
+  const location = useLocation();
+  const requestedSection = location.pathname.toLowerCase().split("/")[2] || "dashboard";
+  const activeSection = [
+    "dashboard",
+    "salaries",
+    "process",
+    "payslips",
+    "history",
+    "reports",
+  ].includes(requestedSection)
+    ? requestedSection
+    : "dashboard";
+  const sectionTitles = {
+    dashboard: "Payroll Dashboard",
+    salaries: "Employee Salaries",
+    process: "Process Payroll",
+    payslips: "Payslips",
+    history: "Payroll History",
+    reports: "Payroll Reports",
+  };
   const [employees] = useState(getEmployeesFromStorage);
   const [payrollRecords, setPayrollRecords] = useState(getPayrollRecordsFromStorage);
   const [period, setPeriod] = useState(getCurrentPeriod);
@@ -89,6 +111,48 @@ function Payroll() {
           .filter((record) => record.status === "Processed")
       ).sort((first, second) => second.period.localeCompare(first.period))
     : [];
+  const payrollHistory = Object.entries(payrollRecords)
+    .flatMap(([recordPeriod, periodRecords]) =>
+      Object.keys(periodRecords || {}).map((employeeId) => {
+        const employee = employees.find(
+          (currentEmployee) => String(currentEmployee.id) === employeeId
+        );
+        if (!employee) return null;
+        return {
+          employee,
+          period: recordPeriod,
+          ...getPayrollRecord(payrollRecords, recordPeriod, employeeId),
+        };
+      })
+    )
+    .filter(Boolean)
+    .sort((first, second) => second.period.localeCompare(first.period));
+  const processedPayslips = payrollHistory.filter(
+    (record) => record.status === "Processed"
+  );
+  const departmentReports = departments.map((departmentName) => {
+    const records = paySummaries.filter(
+      ({ employee }) => employee.department === departmentName
+    );
+    return records.reduce(
+      (summary, record) => ({
+        ...summary,
+        employees: summary.employees + 1,
+        salary: summary.salary + record.salary,
+        deductions: summary.deductions + record.deductions,
+        netSalary: summary.netSalary + Math.max(record.salary - record.deductions, 0),
+        processed: summary.processed + (record.status === "Processed" ? 1 : 0),
+      }),
+      {
+        department: departmentName,
+        employees: 0,
+        salary: 0,
+        deductions: 0,
+        netSalary: 0,
+        processed: 0,
+      }
+    );
+  });
   const processedCount = isEmployee
     ? employeePayslips.length
     : paySummaries.filter((record) => record.status === "Processed").length;
@@ -190,14 +254,29 @@ function Payroll() {
     setSelectedIds([]);
   };
 
+  const downloadPayrollReport = () => {
+    const rows = [
+      ["Department", "Employees", "Basic salary", "Deductions", "Net salary", "Processed"],
+      ...departmentReports.map((report) => [
+        report.department,
+        report.employees,
+        report.salary,
+        report.deductions,
+        report.netSalary,
+        report.processed,
+      ]),
+    ];
+    downloadCsv(`payroll-report-${period}.csv`, createCsvContent(rows));
+  };
+
   return (
     <PageSurface
       className="payroll-page"
-      title={isEmployee ? "My Payslips" : "Payroll"}
+      title={isEmployee ? "My Payslips" : isPayrollRole ? sectionTitles[activeSection] : "Payroll"}
       subtitle={isEmployee ? "View and download your processed payslips." : "Manage salaries, payslips and payment history."}
       icon="fa-credit-card"
-      actionLabel={canManagePayroll ? "Process Payroll" : undefined}
-      onAction={canManagePayroll ? processPayroll : undefined}
+      actionLabel={canManagePayroll && (!isPayrollRole || activeSection === "process") ? "Process Payroll" : undefined}
+      onAction={canManagePayroll && (!isPayrollRole || activeSection === "process") ? processPayroll : undefined}
       stats={[
         { label: isEmployee ? "Payslips" : "Total employees", value: isEmployee ? processedCount : visibleEmployees.length, note: isEmployee ? "Across all available periods" : "From employee directory" },
         { label: isEmployee ? "Processed payslips" : "Payroll processed", value: processedCount, note: isEmployee ? "Ready to download" : `of ${visibleEmployees.length} employees` },
@@ -208,6 +287,20 @@ function Payroll() {
 
       {/* Main Content */}
       <section className="workspace-panel workspace-panel-wide payroll-directory">
+        {isPayrollRole && (
+          <nav className="payroll-section-nav" aria-label="Payroll sections">
+            {Object.entries(sectionTitles).map(([section, label]) => (
+              <Link
+                key={section}
+                to={`/Payroll/${section}`}
+                className={activeSection === section ? "active" : ""}
+                aria-current={activeSection === section ? "page" : undefined}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        )}
         {isEmployee ? (
           <section className="table-container payslip-history-panel">
             <div className="panel-heading">
@@ -263,6 +356,94 @@ function Payroll() {
               <span>Showing {employeePayslips.length} of {employeePayslips.length} payslips</span>
               {feedback && <span className="payroll-feedback" role="status">{feedback}</span>}
             </div>
+          </section>
+        ) : isPayrollRole && activeSection === "dashboard" ? (
+          <section className="payroll-overview">
+            <div className="panel-heading">
+              <h2>{formatPeriod(period)} overview</h2>
+              <span>{pendingCount} pending</span>
+            </div>
+            <p className="panel-note">
+              Review payroll totals and use the sections above to update salaries,
+              process payments, view payslips, or export a report.
+            </p>
+            <div className="payroll-overview-grid">
+              <div><span>Employees</span><strong>{visibleEmployees.length}</strong></div>
+              <div><span>Processed this month</span><strong>{processedCount}</strong></div>
+              <div><span>Net payroll this month</span><strong>{formatCurrency(payrollTotal)}</strong></div>
+            </div>
+          </section>
+        ) : isPayrollRole && activeSection === "payslips" ? (
+          <section className="table-container payslip-history-panel">
+            <div className="panel-heading">
+              <h2>Processed payslips</h2>
+              <span>{processedPayslips.length} payslips</span>
+            </div>
+            <table className="payslip-history-table">
+              <thead><tr><th>Employee</th><th>Pay period</th><th>Basic salary</th><th>Deductions</th><th>Net salary</th><th>Actions</th></tr></thead>
+              <tbody>
+                {processedPayslips.length === 0 ? (
+                  <tr><td className="empty-state" colSpan="6">No processed payslips are available yet.</td></tr>
+                ) : processedPayslips.map((payslip) => (
+                  <tr key={`${payslip.employee.id}-${payslip.period}`}>
+                    <td>{payslip.employee.name}</td>
+                    <td>{formatPeriod(payslip.period)}</td>
+                    <td>{formatCurrency(payslip.salary)}</td>
+                    <td>{formatCurrency(payslip.deductions)}</td>
+                    <td>{formatCurrency(Math.max(payslip.salary - payslip.deductions, 0))}</td>
+                    <td><button className="payroll-download-button" type="button" onClick={() => downloadStatement(payslip.employee, payslip, payslip.period)}>Download</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        ) : isPayrollRole && activeSection === "history" ? (
+          <section className="table-container payslip-history-panel">
+            <div className="panel-heading">
+              <h2>All payroll records</h2>
+              <span>{payrollHistory.length} records</span>
+            </div>
+            <table className="payslip-history-table">
+              <thead><tr><th>Employee</th><th>Pay period</th><th>Basic salary</th><th>Deductions</th><th>Net salary</th><th>Status</th></tr></thead>
+              <tbody>
+                {payrollHistory.length === 0 ? (
+                  <tr><td className="empty-state" colSpan="6">No payroll history is available yet.</td></tr>
+                ) : payrollHistory.map((record) => (
+                  <tr key={`${record.employee.id}-${record.period}`}>
+                    <td>{record.employee.name}</td>
+                    <td>{formatPeriod(record.period)}</td>
+                    <td>{formatCurrency(record.salary)}</td>
+                    <td>{formatCurrency(record.deductions)}</td>
+                    <td>{formatCurrency(Math.max(record.salary - record.deductions, 0))}</td>
+                    <td><span className={`status ${record.status === "Processed" ? "processed" : "pending"}`}>{record.status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        ) : isPayrollRole && activeSection === "reports" ? (
+          <section className="table-container payslip-history-panel">
+            <div className="panel-heading">
+              <h2>{formatPeriod(period)} department summary</h2>
+              <button className="payroll-download-button" type="button" onClick={downloadPayrollReport}>Download CSV</button>
+            </div>
+            <table className="payslip-history-table">
+              <thead><tr><th>Department</th><th>Employees</th><th>Basic salary</th><th>Deductions</th><th>Net salary</th><th>Processed</th></tr></thead>
+              <tbody>
+                {departmentReports.length === 0 ? (
+                  <tr><td className="empty-state" colSpan="6">Add employees to create a payroll report.</td></tr>
+                ) : departmentReports.map((report) => (
+                  <tr key={report.department}>
+                    <td>{report.department}</td>
+                    <td>{report.employees}</td>
+                    <td>{formatCurrency(report.salary)}</td>
+                    <td>{formatCurrency(report.deductions)}</td>
+                    <td>{formatCurrency(report.netSalary)}</td>
+                    <td>{report.processed} / {report.employees}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </section>
         ) : (
           <>

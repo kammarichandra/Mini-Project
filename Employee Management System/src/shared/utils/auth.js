@@ -47,12 +47,8 @@ const roleAccess = {
     "/attendance",
   ],
   Payroll: [
-    "/dashboard",
     "/payroll",
-    "/settings",
-    "/attendance",
-    "/leave_management"
-
+    "/settings"
   ],
   Recruiter: [
     "/dashboard",
@@ -69,7 +65,7 @@ const roleHomePaths = {
   Manager: "/dashboard",
   Employee: "/dashboard",
   Finance: "/dashboard",
-  Payroll: "/payroll",
+  Payroll: "/payroll/dashboard",
   Recruiter: "/dashboard",
 };
 
@@ -133,7 +129,11 @@ export function hasRoleAccess(role, path) {
   const normalizedPath = path.toLowerCase();
   if (normalizedPath === "/welcome") return true;
   const allowedPaths = roleAccess[normalizedRole] || [];
-  return allowedPaths.includes("*") || allowedPaths.includes(normalizedPath);
+  return allowedPaths.includes("*") || allowedPaths.some(
+    (allowedPath) =>
+      normalizedPath === allowedPath ||
+      normalizedPath.startsWith(`${allowedPath}/`)
+  );
 }
 
 export function hasPayrollManagementAccess(role) {

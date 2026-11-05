@@ -1,14 +1,19 @@
 import { NavLink } from "react-router-dom";
 import logo from "@/assets/logo1.png";
-import {
-  getCurrentUser,
-  hasRoleAccess,
-  logoutUser,
-  normalizeRole,
-} from "@/shared/utils/auth";
+import { getCurrentUser, hasRoleAccess, logoutUser, normalizeRole,} from "@/shared/utils/auth";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const role = normalizeRole(getCurrentUser()?.role);
+  const payrollLinks = role === "Payroll"
+    ? [
+        ["/Payroll/dashboard", "fa-gauge-high", "Payroll Dashboard"],
+        ["/Payroll/salaries", "fa-money-bill-wave", "Employee Salaries"],
+        ["/Payroll/process", "fa-calculator", "Process Payroll"],
+        ["/Payroll/payslips", "fa-file-invoice-dollar", "Payslips"],
+        ["/Payroll/history", "fa-clock-rotate-left", "Payroll History"],
+        ["/Payroll/reports", "fa-chart-column", "Payroll Reports"],
+      ]
+    : [["/Payroll", "fa-credit-card", "Payroll"]];
   const links = [
     ["/dashboard", "fa-gauge-high", "Dashboard"],
     ["/Employees", "fa-user", "Employees"],
@@ -16,7 +21,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     ["/Leave_Management", "fa-plane-circle-xmark", "Leave Management"],
     ["/Attendance", "fa-calendar", "Attendance"],
     ["/performance", "fa-arrow-trend-up", "Performance"],
-    ["/Payroll", "fa-credit-card", "Payroll"],
+    ...payrollLinks,
     ["/Reports", "fa-file", "Reports"],
     ["/Candidates", "fa-user-plus", "Candidates"],
     ["/Interviews", "fa-calendar-check", "Interviews"],

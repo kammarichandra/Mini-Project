@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo1.png";
 import { registerUser, roles } from "@/shared/utils/auth";
@@ -20,7 +20,19 @@ function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ fullName: "", email: "", role: "Employee", password: "", confirmPassword: "" });
   const [accepted, setAccepted] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!showTerms) return undefined;
+
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setShowTerms(false);
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [showTerms]);
 
   const updateField = (event) => {
     setForm({ ...form, [event.target.name]: event.target.value });
@@ -121,8 +133,13 @@ function Register() {
               </label>
 
               <label className="terms-check">
-                <input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} />
-                <span>I agree to the <button type="button" onClick={() => {}}>Terms &amp; Conditions</button></span>
+                <input
+                  type="checkbox"
+                  checked={accepted}
+                  onChange={(event) => setAccepted(event.target.checked)}
+                  required
+                />
+                <span>I agree to the <button type="button" onClick={() => setShowTerms(true)}>Terms &amp; Conditions</button></span>
               </label>
 
               <button className="register-submit" type="submit">Register</button>
@@ -144,6 +161,99 @@ function Register() {
           </aside>
         </section>
       </main>
+
+      {showTerms && (
+        <div
+          className="register-terms-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setShowTerms(false);
+          }}
+        >
+          <section
+            className="register-terms-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="register-terms-title"
+          >
+            <header className="register-terms-header">
+              <div>
+                <span>TEAMSYNC ACCOUNT</span>
+                <h2 id="register-terms-title">Terms &amp; Conditions</h2>
+              </div>
+              <button
+                type="button"
+                className="register-terms-close"
+                aria-label="Close Terms and Conditions"
+                onClick={() => setShowTerms(false)}
+              >
+                <i className="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            </header>
+
+            <div className="register-terms-content">
+              <p className="register-terms-intro">
+                Please read these terms before creating a TeamSync account.
+                You must agree to them to register.
+              </p>
+              <h3>1. Your account</h3>
+              <p>
+                Provide accurate registration details and keep your sign-in
+                credentials private. You are responsible for activity carried
+                out through your account and should notify your organization if
+                you believe it has been used without permission.
+              </p>
+              <h3>2. Appropriate use</h3>
+              <p>
+                Use TeamSync only for lawful workplace and HR activities that
+                you are authorized to perform. Do not misuse the service,
+                attempt to access another person’s account, or interfere with
+                its operation.
+              </p>
+              <h3>3. Employee and workplace information</h3>
+              <p>
+                Enter or access employee information only when you have
+                permission to do so. Your organization is responsible for
+                determining what information it may process and for following
+                applicable workplace and privacy requirements.
+              </p>
+              <h3>4. Service availability</h3>
+              <p>
+                TeamSync is provided as a workplace management application.
+                Features may change over time, and uninterrupted availability
+                cannot be guaranteed.
+              </p>
+              <h3>5. Agreement</h3>
+              <p>
+                By selecting “I agree,” you confirm that you have read and
+                accept these Terms &amp; Conditions and will use TeamSync
+                responsibly.
+              </p>
+            </div>
+
+            <footer className="register-terms-footer">
+              <button
+                type="button"
+                className="register-terms-secondary"
+                onClick={() => setShowTerms(false)}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="register-terms-accept"
+                autoFocus
+                onClick={() => {
+                  setAccepted(true);
+                  setError("");
+                  setShowTerms(false);
+                }}
+              >
+                I agree
+              </button>
+            </footer>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

@@ -36,6 +36,37 @@ function getDateKey(date) {
   return `${year}-${month}-${day}`;
 }
 
+function hasCompletedOneYear(joiningDate, today) {
+  if (typeof joiningDate !== "string" || !joiningDate.trim()) return false;
+
+  const dateParts = /^(\d{4})-(\d{2})-(\d{2})(?:$|T)/.exec(joiningDate);
+  const joined = dateParts
+    ? new Date(Number(dateParts[1]), Number(dateParts[2]) - 1, Number(dateParts[3]))
+    : new Date(joiningDate);
+  if (Number.isNaN(joined.getTime())) return false;
+  if (
+    dateParts &&
+    (joined.getFullYear() !== Number(dateParts[1]) ||
+      joined.getMonth() !== Number(dateParts[2]) - 1 ||
+      joined.getDate() !== Number(dateParts[3]))
+  ) {
+    return false;
+  }
+
+  const anniversaryYear = joined.getFullYear() + 1;
+  const anniversaryMonth = joined.getMonth();
+  const anniversaryDay = Math.min(
+    joined.getDate(),
+    new Date(anniversaryYear, anniversaryMonth + 1, 0).getDate()
+  );
+  const anniversary = new Date(
+    anniversaryYear,
+    anniversaryMonth,
+    anniversaryDay
+  );
+  return anniversary <= today;
+}
+
 function getAttendanceHistory() {
   try {
     const history = JSON.parse(
@@ -183,6 +214,26 @@ function Attendance() {
   const today = new Date(currentDate);
   today.setHours(0, 0, 0, 0);
   const todayKey = getDateKey(today);
+  const employeeWorkingDays = Object.entries(attendanceHistory).reduce(
+    (workingDays, [dateKey, records]) => {
+      if (
+        dateKey > todayKey ||
+        !records ||
+        typeof records !== "object" ||
+        Array.isArray(records)
+      ) {
+        return workingDays;
+      }
+
+      Object.entries(records).forEach(([employeeId, record]) => {
+        if (["Present", "Late"].includes(record?.status)) {
+          workingDays[employeeId] = (workingDays[employeeId] || 0) + 1;
+        }
+      });
+      return workingDays;
+    },
+    {}
+  );
   const todayHoliday = getHolidayForDate(today);
   const isAdmin = ["Super Admin", "HR Admin"].includes(role);
   const [adminMonth, setAdminMonth] = useState(() => todayKey.slice(0, 7));
@@ -487,23 +538,6 @@ function Attendance() {
     (adminPage - 1) * adminPageSize,
     adminPage * adminPageSize
   );
-  const adminTotalWorkMinutes = adminRows.reduce(
-    (total, row) => total + (row.workingMinutes || 0),
-    0
-  );
-  const adminWorkingDays = new Set(
-    adminRows
-      .filter((row) => ["Present", "Late"].includes(row.status))
-      .map((row) => row.dateKey)
-  ).size;
-  const adminWorkedRows = adminRows.filter((row) => row.workingMinutes !== null);
-  const adminTotalLunchMinutes = adminRows.reduce(
-    (total, row) => total + (getMinutes(row.record.lunchEnd) !== null
-      ? getDurationMinutes(row.record.lunchStart, row.record.lunchEnd) || 0
-      : 0),
-    0
-  );
-
   const exportReport = () => {
     if (isAdmin) {
       const rows = [
@@ -631,10 +665,10 @@ function Attendance() {
       actionLabel="Export Report"
       onAction={exportReport}
       stats={isAdmin ? [
-        { label: "Total working hours", value: formatDuration(adminTotalWorkMinutes), note: `For ${adminMonth}` },
-        { label: "Total working days", value: adminWorkingDays, note: "Days with present or late records" },
-        { label: "Average daily hours", value: formatDuration(adminWorkedRows.length ? Math.round(adminTotalWorkMinutes / adminWorkedRows.length) : 0), note: "Per employee workday with times" },
-        { label: "Total lunch break", value: formatDuration(adminTotalLunchMinutes), note: "From saved lunch times" },
+        { label: "Total working hours", value: "8h 00m", note: "Standard daily work hours" },
+        { label: "Employees tracked", value: visibleEmployees.length, note: "Employees in your team" },
+        { label: "Average daily hours", value: "7h 00m", note: "Standard productive hours" },
+        { label: "Lunch break", value: "1h 00m", note: "Standard daily break" },
       ] : [
         { label: "Present today", value: presentCount, note: `of ${activeEmployees.length} active employees` },
         { label: "On leave", value: onLeaveCount, note: "Employee directory", tone: "warning" },
@@ -731,6 +765,16 @@ function Attendance() {
                       const statusClass = row.status
                         .toLowerCase()
                         .replaceAll(" ", "-");
+                      const completedOneYear = hasCompletedOneYear(
+                        row.employee.addedAt,
+                        today
+                      );
+                      const employeeHoverDetails = [
+                        `Total working days: ${employeeWorkingDays[row.employee.id] || 0}`,
+                        ...(completedOneYear
+                          ? ["Congratulations! Successfully completed 1 year with the company."]
+                          : []),
+                      ].join("\n");
 
                       return (
                         <tr key={`${row.dateKey}-${row.employee.id}`}>
@@ -741,7 +785,13 @@ function Attendance() {
 
                           {/* Employee Name */}
                           <td className="attendance-admin-employee">
-                            {row.employee.name}
+                            <span
+                              tabIndex={0}
+                              title={employeeHoverDetails}
+                              aria-label={`${row.employee.name}. ${employeeHoverDetails.replace("\n", " ")}`}
+                            >
+                              {row.employee.name}
+                            </span>
                           </td>
 
                           {/* Employee ID */}
@@ -793,7 +843,7 @@ function Attendance() {
             <span>
               Showing {filteredAdminRows.length
                 ? (adminPage - 1) * adminPageSize + 1
-                : 0}–{Math.min(adminPage * adminPageSize, filteredAdminRows.length)} of {filteredAdminRows.length} records
+                : 0}-{Math.min(adminPage * adminPageSize, filteredAdminRows.length)} of {filteredAdminRows.length} records
             </span>
             <div>
               <button

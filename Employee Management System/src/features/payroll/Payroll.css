@@ -1356,3 +1356,121 @@
 :root[data-theme="dark"] .payroll-page .payslip-history-panel .table-footer {
   border-color: #2b3d53;
 }
+
+.payroll-page .payroll-section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2ebf4;
+}
+
+.payroll-page .payroll-section-nav a {
+  padding: 9px 13px;
+  border: 1px solid #dce7f1;
+  border-radius: 9px;
+  background: #fff;
+  color: #536b84;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.payroll-page .payroll-section-nav a:hover,
+.payroll-page .payroll-section-nav a.active {
+  border-color: #b6d6f2;
+  background: #eef7ff;
+  color: #0879f9;
+}
+
+.payroll-page .payroll-overview {
+  padding: 18px;
+  border: 1px solid #e0e9f2;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.payroll-page .payroll-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.payroll-page .payroll-overview-grid > div {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #e3ebf3;
+  border-radius: 11px;
+  background: #f8fbff;
+}
+
+.payroll-page .payroll-overview-grid span {
+  color: #6b8097;
+  font-size: 12px;
+}
+
+.payroll-page .payroll-overview-grid strong {
+  color: #173a5d;
+  font-size: 20px;
+}
+
+.payroll-page .payroll-download-button {
+  padding: 8px 12px;
+  border: 1px solid #d6e5f2;
+  border-radius: 8px;
+  background: #fff;
+  color: #176fbd;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.payroll-page .payroll-download-button:hover {
+  border-color: #a7cbed;
+  background: #eef7ff;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-section-nav {
+  border-color: #2b3d53;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-section-nav a,
+:root[data-theme="dark"] .payroll-page .payroll-download-button {
+  border-color: #354760;
+  background: #17263a;
+  color: #c0cede;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-section-nav a:hover,
+:root[data-theme="dark"] .payroll-page .payroll-section-nav a.active {
+  border-color: #3b6590;
+  background: #20344d;
+  color: #90c8ff;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-overview {
+  border-color: #2b3d53;
+  background: #152236;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-overview-grid > div {
+  border-color: #2b3d53;
+  background: #19283c;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-overview-grid span {
+  color: #91a5bd;
+}
+
+:root[data-theme="dark"] .payroll-page .payroll-overview-grid strong {
+  color: #dce7f5;
+}
+
+@media (max-width: 700px) {
+  .payroll-page .payroll-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
