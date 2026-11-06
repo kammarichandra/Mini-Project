@@ -1,4 +1,5 @@
 {
-  "buildCommand": "npm run build",
+  "installCommand": "if [ -f \"Employee Management System/package.json\" ]; then cd \"Employee Management System\" && npm ci; else npm ci; fi",
+  "buildCommand": "if [ -f \"Employee Management System/package.json\" ]; then cd \"Employee Management System\" && npm run build && cd .. && mkdir -p dist && cp -R \"Employee Management System/dist/.\" dist/; else npm run build; fi",
   "outputDirectory": "dist"
 }
