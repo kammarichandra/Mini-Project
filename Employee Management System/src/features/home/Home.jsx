@@ -247,7 +247,7 @@ function Home() {
       </main>
 
       <footer className="home-footer">
-        <span>© {currentTime.getFullYear()} TeamSync · People operations made simpler.</span><div><a href="#contact">Contact</a><a href="#contact">Privacy</a><a href="#contact">Terms</a></div>
+        <span>© {currentTime.getFullYear()} TeamSyncs · People operations made simpler.</span><div><a href="#contact">Contact</a><a href="#contact">Privacy</a><a href="#contact">Terms</a></div>
       </footer>
 
     </div>
