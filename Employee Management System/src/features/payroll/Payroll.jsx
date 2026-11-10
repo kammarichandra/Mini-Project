@@ -307,51 +307,53 @@ function Payroll() {
               <h2 className="payslip">Payslip history</h2>
               <span className="view">{employeePayslips.length} payslip{employeePayslips.length === 1 ? "" : "s"}</span>
             </div>
-            <table className="payslip-history-table">
-              <thead>
-                <tr>
-                  <th>Emp Id</th>
-                  <th>Pay period</th>
-                  <th>Basic salary</th>
-                  <th>Deductions</th>
-                  <th>Net salary</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employeePayslips.length === 0 ? (
-                  <tr><td className="empty-state" colSpan="7">
-                    {visibleEmployees.length
-                      ? "No processed payslips are available yet."
-                      : "No payslip profile is linked to this account yet."}
-                  </td></tr>
-                ) : employeePayslips.map((payslip, index) => (
-                  <tr
-                    key={`${payslip.employee.id}-${payslip.period}`}
-                  >
-                    <td>{index + 1}</td>
-                    <td>{formatPeriod(payslip.period)}</td>
-                    <td>{formatCurrency(payslip.salary)}</td>
-                    <td>{formatCurrency(payslip.deductions)}</td>
-                    <td>{formatCurrency(Math.max(payslip.salary - payslip.deductions, 0))}</td>
-                    <td><span className="status processed">{payslip.status}</span></td>
-                    <td>
-                      <div className="actions">
-                        <button
-                          type="button"
-                          title="Download payslip"
-                          aria-label={`Download ${payslip.employee.name}'s ${formatPeriod(payslip.period)} payslip`}
-                          onClick={() => downloadStatement(payslip.employee, payslip, payslip.period)}
-                        >
-                          <i className="fa-solid fa-download" aria-hidden="true"></i>
-                        </button>
-                      </div>
-                    </td>
+            <div className="payslip-history-scroll" role="region" aria-label="Payslip history table" tabIndex={0}>
+              <table className="payslip-history-table">
+                <thead>
+                  <tr>
+                    <th>Emp Id</th>
+                    <th>Pay period</th>
+                    <th>Basic salary</th>
+                    <th>Deductions</th>
+                    <th>Net salary</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {employeePayslips.length === 0 ? (
+                    <tr><td className="empty-state" colSpan="7">
+                      {visibleEmployees.length
+                        ? "No processed payslips are available yet."
+                        : "No payslip profile is linked to this account yet."}
+                    </td></tr>
+                  ) : employeePayslips.map((payslip, index) => (
+                    <tr
+                      key={`${payslip.employee.id}-${payslip.period}`}
+                    >
+                      <td>{index + 1}</td>
+                      <td>{formatPeriod(payslip.period)}</td>
+                      <td>{formatCurrency(payslip.salary)}</td>
+                      <td>{formatCurrency(payslip.deductions)}</td>
+                      <td>{formatCurrency(Math.max(payslip.salary - payslip.deductions, 0))}</td>
+                      <td><span className="status processed">{payslip.status}</span></td>
+                      <td>
+                        <div className="actions">
+                          <button
+                            type="button"
+                            title="Download payslip"
+                            aria-label={`Download ${payslip.employee.name}'s ${formatPeriod(payslip.period)} payslip`}
+                            onClick={() => downloadStatement(payslip.employee, payslip, payslip.period)}
+                          >
+                            <i className="fa-solid fa-download" aria-hidden="true"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <div className="table-footer">
               <span>Showing {employeePayslips.length} of {employeePayslips.length} payslips</span>
               {feedback && <span className="payroll-feedback" role="status">{feedback}</span>}
@@ -379,23 +381,25 @@ function Payroll() {
               <h2>Processed payslips</h2>
               <span>{processedPayslips.length} payslips</span>
             </div>
-            <table className="payslip-history-table">
-              <thead><tr><th>Employee</th><th>Pay period</th><th>Basic salary</th><th>Deductions</th><th>Net salary</th><th>Actions</th></tr></thead>
-              <tbody>
-                {processedPayslips.length === 0 ? (
-                  <tr><td className="empty-state" colSpan="6">No processed payslips are available yet.</td></tr>
-                ) : processedPayslips.map((payslip) => (
-                  <tr key={`${payslip.employee.id}-${payslip.period}`}>
-                    <td>{payslip.employee.name}</td>
-                    <td>{formatPeriod(payslip.period)}</td>
-                    <td>{formatCurrency(payslip.salary)}</td>
-                    <td>{formatCurrency(payslip.deductions)}</td>
-                    <td>{formatCurrency(Math.max(payslip.salary - payslip.deductions, 0))}</td>
-                    <td><button className="payroll-download-button" type="button" onClick={() => downloadStatement(payslip.employee, payslip, payslip.period)}>Download</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="payslip-history-scroll" role="region" aria-label="Processed payslips table" tabIndex={0}>
+              <table className="payslip-history-table">
+                <thead><tr><th>Employee</th><th>Pay period</th><th>Basic salary</th><th>Deductions</th><th>Net salary</th><th>Actions</th></tr></thead>
+                <tbody>
+                  {processedPayslips.length === 0 ? (
+                    <tr><td className="empty-state" colSpan="6">No processed payslips are available yet.</td></tr>
+                  ) : processedPayslips.map((payslip) => (
+                    <tr key={`${payslip.employee.id}-${payslip.period}`}>
+                      <td>{payslip.employee.name}</td>
+                      <td>{formatPeriod(payslip.period)}</td>
+                      <td>{formatCurrency(payslip.salary)}</td>
+                      <td>{formatCurrency(payslip.deductions)}</td>
+                      <td>{formatCurrency(Math.max(payslip.salary - payslip.deductions, 0))}</td>
+                      <td><button className="payroll-download-button" type="button" onClick={() => downloadStatement(payslip.employee, payslip, payslip.period)}>Download</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
         ) : isPayrollRole && activeSection === "history" ? (
           <section className="table-container payslip-history-panel">
@@ -403,23 +407,25 @@ function Payroll() {
               <h2>All payroll records</h2>
               <span>{payrollHistory.length} records</span>
             </div>
-            <table className="payslip-history-table">
-              <thead><tr><th>Employee</th><th>Pay period</th><th>Basic salary</th><th>Deductions</th><th>Net salary</th><th>Status</th></tr></thead>
-              <tbody>
-                {payrollHistory.length === 0 ? (
-                  <tr><td className="empty-state" colSpan="6">No payroll history is available yet.</td></tr>
-                ) : payrollHistory.map((record) => (
-                  <tr key={`${record.employee.id}-${record.period}`}>
-                    <td>{record.employee.name}</td>
-                    <td>{formatPeriod(record.period)}</td>
-                    <td>{formatCurrency(record.salary)}</td>
-                    <td>{formatCurrency(record.deductions)}</td>
-                    <td>{formatCurrency(Math.max(record.salary - record.deductions, 0))}</td>
-                    <td><span className={`status ${record.status === "Processed" ? "processed" : "pending"}`}>{record.status}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="payslip-history-scroll" role="region" aria-label="Payroll history table" tabIndex={0}>
+              <table className="payslip-history-table">
+                <thead><tr><th>Employee</th><th>Pay period</th><th>Basic salary</th><th>Deductions</th><th>Net salary</th><th>Status</th></tr></thead>
+                <tbody>
+                  {payrollHistory.length === 0 ? (
+                    <tr><td className="empty-state" colSpan="6">No payroll history is available yet.</td></tr>
+                  ) : payrollHistory.map((record) => (
+                    <tr key={`${record.employee.id}-${record.period}`}>
+                      <td>{record.employee.name}</td>
+                      <td>{formatPeriod(record.period)}</td>
+                      <td>{formatCurrency(record.salary)}</td>
+                      <td>{formatCurrency(record.deductions)}</td>
+                      <td>{formatCurrency(Math.max(record.salary - record.deductions, 0))}</td>
+                      <td><span className={`status ${record.status === "Processed" ? "processed" : "pending"}`}>{record.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
         ) : isPayrollRole && activeSection === "reports" ? (
           <section className="table-container payslip-history-panel">
@@ -427,23 +433,25 @@ function Payroll() {
               <h2>{formatPeriod(period)} department summary</h2>
               <button className="payroll-download-button" type="button" onClick={downloadPayrollReport}>Download CSV</button>
             </div>
-            <table className="payslip-history-table">
-              <thead><tr><th>Department</th><th>Employees</th><th>Basic salary</th><th>Deductions</th><th>Net salary</th><th>Processed</th></tr></thead>
-              <tbody>
-                {departmentReports.length === 0 ? (
-                  <tr><td className="empty-state" colSpan="6">Add employees to create a payroll report.</td></tr>
-                ) : departmentReports.map((report) => (
-                  <tr key={report.department}>
-                    <td>{report.department}</td>
-                    <td>{report.employees}</td>
-                    <td>{formatCurrency(report.salary)}</td>
-                    <td>{formatCurrency(report.deductions)}</td>
-                    <td>{formatCurrency(report.netSalary)}</td>
-                    <td>{report.processed} / {report.employees}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="payslip-history-scroll" role="region" aria-label="Department payroll summary table" tabIndex={0}>
+              <table className="payslip-history-table">
+                <thead><tr><th>Department</th><th>Employees</th><th>Basic salary</th><th>Deductions</th><th>Net salary</th><th>Processed</th></tr></thead>
+                <tbody>
+                  {departmentReports.length === 0 ? (
+                    <tr><td className="empty-state" colSpan="6">Add employees to create a payroll report.</td></tr>
+                  ) : departmentReports.map((report) => (
+                    <tr key={report.department}>
+                      <td>{report.department}</td>
+                      <td>{report.employees}</td>
+                      <td>{formatCurrency(report.salary)}</td>
+                      <td>{formatCurrency(report.deductions)}</td>
+                      <td>{formatCurrency(report.netSalary)}</td>
+                      <td>{report.processed} / {report.employees}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
         ) : (
           <>
@@ -500,7 +508,12 @@ function Payroll() {
         </section>
 
         {/* Payroll Table */}
-        <section className="table-container">
+        <section
+          className="table-container"
+          role="region"
+          aria-label="Payroll employee table"
+          tabIndex={0}
+        >
 
           <table>
 

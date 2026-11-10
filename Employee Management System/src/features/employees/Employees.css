@@ -474,12 +474,14 @@
   }
 
   .employee-page .table-container {
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
   }
 
   .employee-page table {
     width: 100%;
-    min-width: 0;
+    min-width: 860px;
     table-layout: fixed;
   }
 
@@ -514,11 +516,12 @@
   }
 
   .employee-page .table-container {
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 
   .employee-page table {
-    min-width: 0;
+    min-width: 860px;
     table-layout: fixed;
   }
 
@@ -532,58 +535,23 @@
     padding-left: 10px;
   }
 
-  .employee-page th:nth-child(2),
-  .employee-page td:nth-child(2),
-  .employee-page th:nth-child(4),
-  .employee-page td:nth-child(4),
-  .employee-page th:nth-child(6),
-  .employee-page td:nth-child(6) {
-    display: none;
-  }
-
-  .employee-page th:nth-child(1),
-  .employee-page td:nth-child(1) {
-    width: 30px;
-  }
-
-  .employee-page th:nth-child(3),
-  .employee-page td:nth-child(3) {
-    width: 33%;
-  }
-
-  .employee-page th:nth-child(5),
-  .employee-page td:nth-child(5) {
-    width: 15%;
-  }
-
-  .employee-page th:nth-child(8),
-  .employee-page td:nth-child(8) {
-    width: 15%;
-  }
-
-  .employee-page th:nth-child(9),
-  .employee-page td:nth-child(9) {
-    width: 60px;
-  }
-
   .employee-page th,
   .employee-page td {
-    padding: 6px 4px;
-    overflow-wrap: anywhere;
+    padding: 6px 10px;
   }
 
   .employee-page .employee-name strong,
   .employee-page td {
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .employee-page .employee-name {
-    gap: 8px;
+    gap: 10px;
   }
 
   .employee-page .employee-avatar {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     font-size: 12px;
   }
 
@@ -651,5 +619,3 @@
     height: 34px;
   }
 }
-
-

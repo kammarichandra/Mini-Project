@@ -301,7 +301,7 @@ function Employees() {
 
 
       {/* ================= MAIN CONTENT ================= */}
-      <section className="workspace-panel workspace-panel-wide directory-panel">
+      <section className={`workspace-panel workspace-panel-wide directory-panel${isEmployee ? " employee-profile-directory" : ""}`}>
         <div className="panel-heading">
           <h2>{isEmployee ? "My profile" : isManager ? "Team employees" : "Employee directory"}</h2>
           <span>{filteredEmployees.length} of {profileEmployees.length} employees</span>
@@ -375,7 +375,12 @@ function Employees() {
         )}
 
         {/* ================= EMPLOYEE TABLE ================= */}
-        <div className="table-container">
+        <div
+          className="table-container"
+          role={isEmployee ? "region" : undefined}
+          aria-label={isEmployee ? "My employee profile table" : undefined}
+          tabIndex={isEmployee ? 0 : undefined}
+        >
 
 
           <table className="employee-directory-table">
@@ -569,8 +574,6 @@ function Employees() {
               )}
             </tbody>
           </table>
-
-
 
           {/* ================= TABLE FOOTER ================= */}
           <div className="table-footer">

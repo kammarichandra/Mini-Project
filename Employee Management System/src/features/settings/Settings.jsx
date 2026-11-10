@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PageSurface from "@/shared/components/PageSurface";
 import { useTheme } from "@/shared/components/useTheme";
-import { getCurrentUser, normalizeRole } from "@/shared/utils/auth";
+import { getCurrentUser, logoutUser, normalizeRole } from "@/shared/utils/auth";
 import { getEmployeesFromStorage } from "@/shared/utils/employees";
 
 const settingsStorageKey = "employeeManagementDashboardSettings";
@@ -37,6 +38,7 @@ function getSavedSettings(storageKey, defaults) {
 }
 
 function Settings() {
+  const navigate = useNavigate();
   const currentUser = getCurrentUser();
   const role = normalizeRole(currentUser?.role);
   const isEmployee = role === "Employee";
@@ -57,6 +59,25 @@ function Settings() {
   const { theme, setTheme } = useTheme();
   const [themeMessage, setThemeMessage] = useState("");
   const notificationsOn = settings.notificationsEnabled !== false;
+  const logoutSection = (
+    <section className="workspace-panel settings-logout-panel">
+      <div className="panel-heading">
+        <h2>Account actions</h2>
+        <span>End your current session</span>
+      </div>
+      <button
+        className="settings-logout-button"
+        type="button"
+        onClick={() => {
+          logoutUser();
+          navigate("/", { replace: true });
+        }}
+      >
+        <i className="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+        Logout
+      </button>
+    </section>
+  );
 
   const updateSetting = (field, value) => {
     setSettings((current) => ({ ...current, [field]: value }));
@@ -182,6 +203,7 @@ function Settings() {
           <label className="setting-row"><span>Leave request emails</span><input type="checkbox" checked={settings.leaveAlerts} onChange={(event) => updateSetting("leaveAlerts", event.target.checked)} disabled={!notificationsOn} /></label>
           {saveMessage && <p className="settings-feedback" role="status">{saveMessage}</p>}
         </section>
+        {logoutSection}
       </PageSurface>
     );
   }
@@ -272,6 +294,7 @@ function Settings() {
         <label className="setting-row"><span>Leave request emails</span><input type="checkbox" checked={settings.leaveAlerts} onChange={(event) => updateSetting("leaveAlerts", event.target.checked)} disabled={!notificationsOn} /></label>
         {saveMessage && <p className="settings-feedback" role="status">{saveMessage}</p>}
       </section>
+      {logoutSection}
     </PageSurface>
   );
 }

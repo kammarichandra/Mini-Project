@@ -984,23 +984,26 @@ function Attendance() {
                       </span>
 
                       {/* Availability */}
-                      <select
-                        className={`attendance-status attendance-status-${availability
-                          .toLowerCase()
-                          .replaceAll(" ", "-")}`}
-                        aria-label={`Availability for ${employee.name}`}
-                        value={availability}
-                        disabled={employee.status === "On Leave"}
-                        onChange={(event) =>
-                          updateAvailability(employee.id, event.target.value)
-                        }
-                      >
-                        {availabilityStatuses.map((availabilityStatus) => (
-                          <option key={availabilityStatus}>
-                            {availabilityStatus}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="attendance-availability">
+                        <span>Availability</span>
+                        <select
+                          className={`attendance-status attendance-status-${availability
+                            .toLowerCase()
+                            .replaceAll(" ", "-")}`}
+                          aria-label={`Availability for ${employee.name}`}
+                          value={availability}
+                          disabled={employee.status === "On Leave"}
+                          onChange={(event) =>
+                            updateAvailability(employee.id, event.target.value)
+                          }
+                        >
+                          {availabilityStatuses.map((availabilityStatus) => (
+                            <option key={availabilityStatus}>
+                              {availabilityStatus}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
                       {/* Actions */}
                       <div className="attendance-actions">

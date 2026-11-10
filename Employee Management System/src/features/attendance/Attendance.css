@@ -225,13 +225,12 @@
   .attendance-page .attendance-table > div > :nth-child(2),
   .attendance-page .attendance-table > div > :nth-child(4),
   .attendance-page .attendance-table > div > :nth-child(5),
-  .attendance-page .attendance-table > div > :nth-child(6),
-  .attendance-page .attendance-table > div > :nth-child(10) {
+  .attendance-page .attendance-table > div > :nth-child(6) {
     display: none;
   }
 
   .attendance-page .attendance-table > div {
-    grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr)) minmax(0, 0.9fr) minmax(0, 1.7fr);
+    grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 0.9fr)) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.6fr);
     gap: 6px;
     padding: 10px 8px;
     font-size: 11px;
@@ -274,7 +273,35 @@
 
   .attendance-page .attendance-table .attendance-department,
   .attendance-page .attendance-table .attendance-duration {
-    display: none;
+    display: block;
+    color: #536f89;
+    font-size: 11px;
+    white-space: normal;
+  }
+
+  .attendance-page .attendance-table .attendance-department::before,
+  .attendance-page .attendance-table .attendance-duration::before {
+    display: block;
+    margin-bottom: 4px;
+    color: #8395a9;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .attendance-page .attendance-table .attendance-department::before {
+    content: "Department";
+  }
+
+  .attendance-page .attendance-table > .attendance-table-row > .attendance-duration:nth-child(4)::before {
+    content: "Before lunch";
+  }
+
+  .attendance-page .attendance-table > .attendance-table-row > .attendance-duration:nth-child(5)::before {
+    content: "Lunch break";
+  }
+
+  .attendance-page .attendance-table > .attendance-table-row > .attendance-duration:nth-child(6)::before {
+    content: "After lunch";
   }
 
   .attendance-page .attendance-table > .attendance-table-row > .attendance-status {
@@ -287,21 +314,56 @@
   }
 
   .attendance-page .attendance-table .attendance-checkin:not(.attendance-checkout)::before {
-    content: "In ";
+    content: "Login: ";
     color: #8395a9;
     font-size: 10px;
     font-weight: 700;
   }
 
   .attendance-page .attendance-table .attendance-checkout::before {
-    content: "Out ";
+    content: "Logout: ";
     color: #8395a9;
     font-size: 10px;
     font-weight: 700;
   }
 
+  .attendance-page .attendance-table .attendance-record-status {
+    display: grid;
+    gap: 4px;
+    width: fit-content;
+    padding: 0;
+    background: transparent;
+  }
+
+  .attendance-page .attendance-table .attendance-record-status::before {
+    color: #8395a9;
+    content: "Status";
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .attendance-page .attendance-availability {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+  }
+
+  .attendance-page .attendance-availability > span {
+    color: #8395a9;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .attendance-page .attendance-table select.attendance-status {
+    min-width: 0;
+    min-height: 34px;
+    padding: 0 6px;
+    font-size: 11px;
+  }
+
   .attendance-page .attendance-actions {
     grid-column: 1 / -1;
+    flex-wrap: wrap;
   }
 }
 
@@ -538,6 +600,16 @@
   font-size: 12px;
   font-weight: 650;
   cursor: pointer;
+}
+
+.attendance-page .attendance-availability {
+  min-width: 0;
+}
+
+@media (min-width: 641px) {
+  .attendance-page .attendance-availability > span {
+    display: none;
+  }
 }
 
 .attendance-page .attendance-status-present {
@@ -1384,4 +1456,187 @@
   border-color: #355778;
   background: #20364d;
   color: #9acbff;
+}
+
+/* ===== ATTENDANCE RESPONSIVE FIX ===== */
+
+.attendance-page,
+.attendance-page * {
+  box-sizing: border-box;
+}
+
+.attendance-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Desktop table */
+.attendance-page .attendance-table {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.attendance-page .attendance-table > div {
+  min-width: 1100px;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .attendance-page .workspace-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .attendance-page .attendance-table {
+    overflow-x: auto;
+  }
+
+  .attendance-page .attendance-table > div {
+    min-width: 1000px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .attendance-page .workspace-heading {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .attendance-page .workspace-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .attendance-page .workspace-stat {
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .attendance-page .attendance-main-panel,
+  .attendance-page .attendance-trend-panel,
+  .attendance-page .attendance-calendar-panel,
+  .attendance-page .attendance-holidays-panel {
+    padding: 12px;
+    min-width: 0;
+  }
+
+  .attendance-page .attendance-table {
+    overflow: visible;
+  }
+
+  .attendance-page .attendance-table > .attendance-table-head {
+    display: none;
+  }
+
+  .attendance-page .attendance-table > .attendance-table-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    min-width: 0;
+    padding: 14px;
+  }
+
+  .attendance-page .attendance-employee {
+    grid-column: 1 / -1;
+  }
+
+  .attendance-page .attendance-department,
+  .attendance-page .attendance-duration {
+    display: block;
+    white-space: normal;
+  }
+
+  .attendance-page .attendance-table .attendance-department::before,
+  .attendance-page .attendance-table .attendance-duration::before {
+    display: block;
+    margin-bottom: 4px;
+    color: #8395a9;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .attendance-page .attendance-table .attendance-department::before {
+    content: "Department";
+  }
+
+  .attendance-page .attendance-table > .attendance-table-row > .attendance-duration:nth-child(4)::before {
+    content: "Before lunch";
+  }
+
+  .attendance-page .attendance-table > .attendance-table-row > .attendance-duration:nth-child(5)::before {
+    content: "Lunch break";
+  }
+
+  .attendance-page .attendance-table > .attendance-table-row > .attendance-duration:nth-child(6)::before {
+    content: "After lunch";
+  }
+
+  .attendance-page .attendance-table .attendance-checkin:not(.attendance-checkout)::before {
+    content: "Login: ";
+  }
+
+  .attendance-page .attendance-table .attendance-checkout::before {
+    content: "Logout: ";
+  }
+
+  .attendance-page .attendance-checkin,
+  .attendance-page .attendance-record-status,
+  .attendance-page .attendance-availability {
+    min-width: 0;
+  }
+
+  .attendance-page .attendance-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .attendance-page .attendance-actions button {
+    min-width: 34px;
+    min-height: 36px;
+  }
+
+  .attendance-page .attendance-more-wrap {
+    position: relative;
+  }
+
+  .attendance-page .attendance-action-menu {
+    right: 0;
+    left: auto;
+    max-width: calc(100vw - 40px);
+  }
+
+  .attendance-page .attendance-calendar-grid {
+    gap: 3px;
+  }
+
+  .attendance-page .attendance-holiday-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 380px) {
+  .attendance-page .workspace-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .attendance-page .attendance-table > .attendance-table-row {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .attendance-page .attendance-actions button {
+    font-size: 11px;
+  }
+
+  .attendance-page .attendance-department-chart-content {
+    flex-wrap: wrap;
+  }
 }

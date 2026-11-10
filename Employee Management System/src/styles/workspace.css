@@ -2451,6 +2451,37 @@ body {
   text-align: right;
 }
 
+.settings-page .settings-logout-panel {
+  grid-column: 1 / -1;
+}
+
+.settings-page .settings-logout-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border: 1px solid #f1c7c7;
+  border-radius: 7px;
+  background: #fff5f5;
+  color: #b4232f;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.settings-page .settings-logout-button:hover {
+  border-color: #e6a3a7;
+  background: #ffebec;
+}
+
+.settings-page .settings-logout-button:focus-visible {
+  outline: 3px solid rgba(180, 35, 47, 0.25);
+  outline-offset: 2px;
+}
+
 .settings-page .theme-setting-copy strong {
   font-size: 13px;
 }
@@ -2492,3 +2523,8 @@ body {
   color: #e2eaf4;
 }
 
+:root[data-theme="dark"] .settings-page .settings-logout-button {
+  border-color: #653b3a;
+  background: #3d2929;
+  color: #ffaaaa;
+}
