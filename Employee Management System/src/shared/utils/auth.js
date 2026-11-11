@@ -5,8 +5,9 @@ export const roles = [
   "Super Admin",
   "HR Admin",
   "Manager",
+  "Technical Lead",
   "Employee",
-  "Finance",
+  // "Finance",
   "Payroll",
   "Recruiter",
 ];
@@ -24,6 +25,7 @@ const roleAccess = {
     "/leave_management",
     "/attendance",
     "/payroll",
+    
   ],
   Manager: [
     "/dashboard",
@@ -32,6 +34,18 @@ const roleAccess = {
     "/leave_management",
     "/performance",
   ],
+  "Technical Lead": [
+    "/dashboard",
+    "/my-team",
+    "/projects",
+    "/tasks",
+    "/code-reviews",
+    "/bug-tracking",
+    "/performance",
+    "/sprint-planning",
+    "/reports",
+    "/settings"
+  ],
   Employee: [
     "/dashboard",
     "/employees",
@@ -39,13 +53,14 @@ const roleAccess = {
     "/attendance",
     "/leave_management",
     "/payroll",
+    "/tasks",
   ],
-  Finance: [
-    "/dashboard",
-    "/payroll",
-    "/reports",
-    "/attendance",
-  ],
+  // Finance: [
+  //   "/dashboard",
+  //   "/payroll",
+  //   "/reports",
+  //   "/attendance",
+  // ],
   Payroll: [
     "/payroll",
     "/settings"
@@ -63,6 +78,7 @@ const roleHomePaths = {
   "Super Admin": "/dashboard",
   "HR Admin": "/dashboard",
   Manager: "/dashboard",
+  "Technical Lead": "/dashboard",
   Employee: "/dashboard",
   Finance: "/dashboard",
   Payroll: "/payroll/dashboard",

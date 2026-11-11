@@ -1675,3 +1675,98 @@
     padding: 12px;
   }
 }
+
+@media (max-width: 700px) {
+  .payroll-page .payslip-records-panel .payslip-history-scroll {
+    overflow: visible;
+  }
+
+  .content .payroll-page .payslip-records-panel .payslip-history-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .payroll-page .payslip-records-panel .payslip-history-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .payroll-page .payslip-records-panel .payslip-history-table tbody {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .payroll-page .payslip-records-panel .payslip-history-table tbody tr {
+    display: grid;
+    gap: 9px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #e0e9f2;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .content .payroll-page .payslip-records-panel .payslip-history-table tbody td {
+    display: grid;
+    grid-template-columns: minmax(90px, 0.75fr) minmax(0, 1.25fr);
+    align-items: start;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    padding: 0 0 8px;
+    border: 0;
+    border-bottom: 1px solid #eef2f6;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    font-size: 12px;
+  }
+
+  .payroll-page .payslip-records-panel .payslip-history-table tbody td::before {
+    content: attr(data-label);
+    color: #8295a9;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .payroll-page .payslip-records-panel .payslip-history-table tbody tr td:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .payroll-page .payslip-records-panel .payslip-history-table tbody td.empty-state {
+    display: block;
+    grid-column: 1 / -1;
+    padding: 12px 0;
+    border: 0;
+    text-align: center;
+  }
+
+  .payroll-page .payslip-records-panel .payslip-history-table tbody td.empty-state::before {
+    content: none;
+  }
+
+  :root[data-theme="dark"] .payroll-page .payslip-records-panel .payslip-history-table tbody tr {
+    border-color: #2b3d53;
+    background: #19283c;
+  }
+
+  :root[data-theme="dark"] .payroll-page .payslip-records-panel .payslip-history-table tbody td {
+    border-bottom-color: #2b3d53;
+  }
+
+  :root[data-theme="dark"] .payroll-page .payslip-records-panel .payslip-history-table tbody td::before {
+    color: #91a5bd;
+  }
+}

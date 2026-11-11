@@ -106,7 +106,7 @@ function Home() {
               <small>{formattedDate} · Your local time</small>
             </div>
           </div>
-        </section><br />
+        </section><br /><br />
 
         {/* <section className="feature-strip" id="features">
           {[['fa-user-group', 'Employee Management'], ['fa-calendar-check', 'Leave & Attendance'], ['fa-bullseye', 'Performance Tracking'], ['fa-shield-halved', 'Secure & Scalable']].map(([icon, title]) => <div className="strip-item" key={title}><span><i className={`fa-solid ${icon}`}></i></span><div><strong>{title}</strong><small>Simple and efficient</small></div></div>)}
@@ -154,7 +154,7 @@ function Home() {
               </article>
             ))}
           </div>
-        </section>
+        </section><br />
 
         <section className="home-about" id="about">
           <span className="section-kicker">ABOUT TEAMSYNC</span>

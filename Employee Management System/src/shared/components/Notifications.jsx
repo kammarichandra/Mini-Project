@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getEmployeesFromStorage } from "@/shared/utils/employees";
 import {
   getPayrollRecord,
   getPayrollRecordsFromStorage,
 } from "@/shared/utils/payroll";
+import { getTeamTasks } from "@/shared/utils/teamTasks";
 import { hasRoleAccess, normalizeRole } from "@/shared/utils/auth";
 import { getHolidayForDate } from "@/shared/utils/holidays";
 import "./Notifications.css";
@@ -129,6 +130,35 @@ function getNotifications(user) {
     }
   }
 
+  if (role === "Employee" || role === "Technical Lead") {
+    getTeamTasks().forEach((task) => {
+      if (
+        role === "Employee" &&
+        task.assigneeEmail?.toLowerCase() === email
+      ) {
+        notices.push({
+          id: `task-assigned:${task.id}`,
+          title: "New task assigned",
+          message: `${task.task} · ${task.project} · Due ${task.due}`,
+          path: "/tasks",
+        });
+      }
+
+      if (
+        role === "Technical Lead" &&
+        task.status === "Completed" &&
+        task.assignedBy?.toLowerCase() === email
+      ) {
+        notices.push({
+          id: `task-completed:${task.id}:${task.completedAt || task.updatedAt || "completed"}`,
+          title: "Task marked completed",
+          message: `${task.assignee} completed ${task.task}.`,
+          path: "/tasks",
+        });
+      }
+    });
+  }
+
   return notices;
 }
 
@@ -207,7 +237,7 @@ function Notifications({ user }) {
     };
   }, [isOpen]);
 
-  const refreshNotifications = () => {
+  const refreshNotifications = useCallback(() => {
     const nextClearedIds = getStoredNotificationIds(clearedNotificationsKey, user);
     setClearedIds(nextClearedIds);
     setNotices(
@@ -215,7 +245,22 @@ function Notifications({ user }) {
     );
     setReadIds(getStoredNotificationIds(readNotificationsKey, user));
     setStorageError("");
-  };
+  }, [user]);
+
+  useEffect(() => {
+    const refreshForTaskChanges = (event) => {
+      if (event.type === "focus" || event.key === "teamSyncTeamTasks") {
+        refreshNotifications();
+      }
+    };
+
+    window.addEventListener("storage", refreshForTaskChanges);
+    window.addEventListener("focus", refreshForTaskChanges);
+    return () => {
+      window.removeEventListener("storage", refreshForTaskChanges);
+      window.removeEventListener("focus", refreshForTaskChanges);
+    };
+  }, [refreshNotifications]);
 
   useEffect(() => {
     let timeoutId;

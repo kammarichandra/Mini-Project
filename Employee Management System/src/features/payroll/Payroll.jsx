@@ -302,7 +302,7 @@ function Payroll() {
           </nav>
         )}
         {isEmployee ? (
-          <section className="table-container payslip-history-panel">
+          <section className="table-container payslip-history-panel payslip-records-panel">
             <div className="panel-heading">
               <h2 className="payslip">Payslip history</h2>
               <span className="view">{employeePayslips.length} payslip{employeePayslips.length === 1 ? "" : "s"}</span>
@@ -331,13 +331,13 @@ function Payroll() {
                     <tr
                       key={`${payslip.employee.id}-${payslip.period}`}
                     >
-                      <td>{index + 1}</td>
-                      <td>{formatPeriod(payslip.period)}</td>
-                      <td>{formatCurrency(payslip.salary)}</td>
-                      <td>{formatCurrency(payslip.deductions)}</td>
-                      <td>{formatCurrency(Math.max(payslip.salary - payslip.deductions, 0))}</td>
-                      <td><span className="status processed">{payslip.status}</span></td>
-                      <td>
+                      <td data-label="Emp Id">{index + 1}</td>
+                      <td data-label="Pay period">{formatPeriod(payslip.period)}</td>
+                      <td data-label="Basic salary">{formatCurrency(payslip.salary)}</td>
+                      <td data-label="Deductions">{formatCurrency(payslip.deductions)}</td>
+                      <td data-label="Net salary">{formatCurrency(Math.max(payslip.salary - payslip.deductions, 0))}</td>
+                      <td data-label="Status"><span className="status processed">{payslip.status}</span></td>
+                      <td data-label="Actions">
                         <div className="actions">
                           <button
                             type="button"
@@ -376,7 +376,7 @@ function Payroll() {
             </div>
           </section>
         ) : isPayrollRole && activeSection === "payslips" ? (
-          <section className="table-container payslip-history-panel">
+          <section className="table-container payslip-history-panel payslip-records-panel">
             <div className="panel-heading">
               <h2>Processed payslips</h2>
               <span>{processedPayslips.length} payslips</span>
@@ -389,12 +389,12 @@ function Payroll() {
                     <tr><td className="empty-state" colSpan="6">No processed payslips are available yet.</td></tr>
                   ) : processedPayslips.map((payslip) => (
                     <tr key={`${payslip.employee.id}-${payslip.period}`}>
-                      <td>{payslip.employee.name}</td>
-                      <td>{formatPeriod(payslip.period)}</td>
-                      <td>{formatCurrency(payslip.salary)}</td>
-                      <td>{formatCurrency(payslip.deductions)}</td>
-                      <td>{formatCurrency(Math.max(payslip.salary - payslip.deductions, 0))}</td>
-                      <td><button className="payroll-download-button" type="button" onClick={() => downloadStatement(payslip.employee, payslip, payslip.period)}>Download</button></td>
+                      <td data-label="Employee">{payslip.employee.name}</td>
+                      <td data-label="Pay period">{formatPeriod(payslip.period)}</td>
+                      <td data-label="Basic salary">{formatCurrency(payslip.salary)}</td>
+                      <td data-label="Deductions">{formatCurrency(payslip.deductions)}</td>
+                      <td data-label="Net salary">{formatCurrency(Math.max(payslip.salary - payslip.deductions, 0))}</td>
+                      <td data-label="Actions"><button className="payroll-download-button" type="button" onClick={() => downloadStatement(payslip.employee, payslip, payslip.period)}>Download</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -402,7 +402,7 @@ function Payroll() {
             </div>
           </section>
         ) : isPayrollRole && activeSection === "history" ? (
-          <section className="table-container payslip-history-panel">
+          <section className="table-container payslip-history-panel payslip-records-panel">
             <div className="panel-heading">
               <h2>All payroll records</h2>
               <span>{payrollHistory.length} records</span>
@@ -415,12 +415,12 @@ function Payroll() {
                     <tr><td className="empty-state" colSpan="6">No payroll history is available yet.</td></tr>
                   ) : payrollHistory.map((record) => (
                     <tr key={`${record.employee.id}-${record.period}`}>
-                      <td>{record.employee.name}</td>
-                      <td>{formatPeriod(record.period)}</td>
-                      <td>{formatCurrency(record.salary)}</td>
-                      <td>{formatCurrency(record.deductions)}</td>
-                      <td>{formatCurrency(Math.max(record.salary - record.deductions, 0))}</td>
-                      <td><span className={`status ${record.status === "Processed" ? "processed" : "pending"}`}>{record.status}</span></td>
+                      <td data-label="Employee">{record.employee.name}</td>
+                      <td data-label="Pay period">{formatPeriod(record.period)}</td>
+                      <td data-label="Basic salary">{formatCurrency(record.salary)}</td>
+                      <td data-label="Deductions">{formatCurrency(record.deductions)}</td>
+                      <td data-label="Net salary">{formatCurrency(Math.max(record.salary - record.deductions, 0))}</td>
+                      <td data-label="Status"><span className={`status ${record.status === "Processed" ? "processed" : "pending"}`}>{record.status}</span></td>
                     </tr>
                   ))}
                 </tbody>

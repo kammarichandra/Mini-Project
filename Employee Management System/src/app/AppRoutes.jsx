@@ -11,8 +11,10 @@ import Recruitment from "@/features/recruitment/Recruitment";
 import Reports from "@/features/reports/Reports";
 import Register from "@/features/auth/RegisterPage";
 import Settings from "@/features/settings/Settings";
+import TechnicalLeadPage from "@/features/technical-lead/TechnicalLeadPage";
 import Welcome from "@/features/welcome/Welcome";
 import ProtectedRoute from "@/shared/components/ProtectedRoute";
+import { getCurrentUser, normalizeRole } from "@/shared/utils/auth";
 
 const AppRoutes = () => {
   return (
@@ -72,7 +74,9 @@ const AppRoutes = () => {
         path="/performance"
         element={
           <ProtectedRoute>
-            <Performance />
+            <RolePage technicalLeadPage="performance">
+              <Performance />
+            </RolePage>
           </ProtectedRoute>
         }
       />
@@ -81,9 +85,36 @@ const AppRoutes = () => {
         path="/Reports"
         element={
           <ProtectedRoute>
-            <Reports />
+            <RolePage technicalLeadPage="reports">
+              <Reports />
+            </RolePage>
           </ProtectedRoute>
         }
+      />
+
+      <Route
+        path="/my-team"
+        element={<ProtectedRoute><TechnicalLeadPage page="team" /></ProtectedRoute>}
+      />
+      <Route
+        path="/projects"
+        element={<ProtectedRoute><TechnicalLeadPage page="projects" /></ProtectedRoute>}
+      />
+      <Route
+        path="/tasks"
+        element={<ProtectedRoute><TechnicalLeadPage page="tasks" /></ProtectedRoute>}
+      />
+      <Route
+        path="/code-reviews"
+        element={<ProtectedRoute><TechnicalLeadPage page="reviews" /></ProtectedRoute>}
+      />
+      <Route
+        path="/bug-tracking"
+        element={<ProtectedRoute><TechnicalLeadPage page="bugs" /></ProtectedRoute>}
+      />
+      <Route
+        path="/sprint-planning"
+        element={<ProtectedRoute><TechnicalLeadPage page="sprint" /></ProtectedRoute>}
       />
 
       <Route
@@ -135,5 +166,12 @@ const AppRoutes = () => {
     </Routes>
   );
 };
+
+function RolePage({ technicalLeadPage, children }) {
+  const role = normalizeRole(getCurrentUser()?.role);
+  return role === "Technical Lead"
+    ? <TechnicalLeadPage page={technicalLeadPage} />
+    : children;
+}
 
 export default AppRoutes;

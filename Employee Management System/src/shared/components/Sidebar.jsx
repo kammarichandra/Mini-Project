@@ -4,6 +4,19 @@ import { getCurrentUser, hasRoleAccess, logoutUser, normalizeRole,} from "@/shar
 
 const Sidebar = ({ isOpen, onClose }) => {
   const role = normalizeRole(getCurrentUser()?.role);
+  const technicalLeadLinks = [
+    ["/dashboard", "fa-gauge-high", "Dashboard"],
+    ["/my-team", "fa-people-group", "My Team"],
+    ["/projects", "fa-diagram-project", "Projects"],
+    ["/tasks", "fa-list-check", "Tasks"],
+    ["/code-reviews", "fa-code-branch", "Code Reviews"],
+    ["/bug-tracking", "fa-bug", "Bug Tracking"],
+    ["/performance", "fa-arrow-trend-up", "Team Performance"],
+    ["/sprint-planning", "fa-rotate", "Sprint Planning"],
+    ["/Reports", "fa-chart-column", "Reports"],
+   
+    ["/settings", "fa-gear", "Settings"]
+  ];
   const payrollLinks = role === "Payroll"
     ? [
         ["/Payroll/dashboard", "fa-gauge-high", "Payroll Dashboard"],
@@ -12,11 +25,13 @@ const Sidebar = ({ isOpen, onClose }) => {
         ["/Payroll/payslips", "fa-file-invoice-dollar", "Payslips"],
         ["/Payroll/history", "fa-clock-rotate-left", "Payroll History"],
         ["/Payroll/reports", "fa-chart-column", "Payroll Reports"],
+        ["/settings", "fa-gear", "Settings"]
       ]
     : [["/Payroll", "fa-credit-card", "Payroll"]];
-  const links = [
+  const defaultLinks = [
     ["/dashboard", "fa-gauge-high", "Dashboard"],
     ["/Employees", "fa-user", "Employees"],
+    ["/tasks", "fa-list-check", "My Tasks"],
     ["/settings", "fa-gear", "Settings"],
     ["/Leave_Management", "fa-plane-circle-xmark", "Leave Management"],
     ["/Attendance", "fa-calendar", "Attendance"],
@@ -27,6 +42,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     ["/Interviews", "fa-calendar-check", "Interviews"],
     ["/Hiring", "fa-briefcase", "Hiring"],
   ];
+  const links = role === "Technical Lead" ? technicalLeadLinks : defaultLinks;
 
   return (
     <aside className={`sidebar${isOpen ? " sidebar-open" : ""}`} id="main-navigation">

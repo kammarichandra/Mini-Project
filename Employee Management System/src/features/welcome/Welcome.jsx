@@ -10,6 +10,42 @@ import "./Welcome.css";
 
 const workspaceLinks = [
   {
+    path: "/my-team",
+    icon: "fa-people-group",
+    title: "My Team",
+    description: "See team members and their current availability.",
+  },
+  {
+    path: "/projects",
+    icon: "fa-diagram-project",
+    title: "Projects",
+    description: "Track project progress, ownership, and delivery dates.",
+  },
+  {
+    path: "/tasks",
+    icon: "fa-list-check",
+    title: "Tasks",
+    description: "Review team tasks, priorities, and due dates.",
+  },
+  {
+    path: "/code-reviews",
+    icon: "fa-code-branch",
+    title: "Code Reviews",
+    description: "Review pull requests and monitor code quality.",
+  },
+  {
+    path: "/bug-tracking",
+    icon: "fa-bug",
+    title: "Bug Tracking",
+    description: "Follow reported issues through to resolution.",
+  },
+  {
+    path: "/sprint-planning",
+    icon: "fa-rotate",
+    title: "Sprint Planning",
+    description: "Review sprint goals and work in the backlog.",
+  },
+  {
     path: "/Employees",
     icon: "fa-people-group",
     title: "Meet your team",

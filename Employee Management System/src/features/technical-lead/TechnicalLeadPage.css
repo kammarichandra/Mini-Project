@@ -1,0 +1,269 @@
+.technical-lead-page .lead-table-wrap {
+  overflow-x: auto;
+}
+
+.lead-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #355574;
+  font-size: 13px;
+  text-align: left;
+}
+
+.lead-table th,
+.lead-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e8eef5;
+  white-space: nowrap;
+}
+
+.lead-table th {
+  color: #7890a9;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.lead-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.lead-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #e7f7ef;
+  color: #16835d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lead-status-in-progress,
+.lead-status-review,
+.lead-status-active {
+  background: #e8f2ff;
+  color: #2672bd;
+}
+
+.lead-status-pending,
+.lead-status-at-risk,
+.lead-status-on-leave,
+.lead-status-delayed {
+  background: #fff3dc;
+  color: #a86e12;
+}
+
+.lead-status-open,
+.lead-status-high {
+  background: #ffebeb;
+  color: #c34a4a;
+}
+
+.lead-member-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.lead-member-card {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  padding: 18px 12px;
+  border: 1px solid #e7eef6;
+  border-radius: 13px;
+  background: #fff;
+  text-align: center;
+}
+
+.lead-member-avatar {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e6efff;
+  color: #3979bb;
+  font-weight: 700;
+}
+
+.lead-member-card strong {
+  color: #274563;
+  font-size: 13px;
+}
+
+.lead-member-card > span:not(.lead-member-avatar, .lead-status) {
+  color: #8092a7;
+  font-size: 11px;
+}
+
+.lead-performance-list {
+  display: grid;
+  gap: 17px;
+}
+
+.lead-performance-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(80px, 1.4fr) 38px;
+  align-items: center;
+  gap: 12px;
+}
+
+.lead-performance-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.lead-performance-copy strong,
+.lead-performance-row b {
+  color: #355574;
+  font-size: 12px;
+}
+
+.lead-performance-copy span {
+  color: #8799ad;
+  font-size: 10px;
+}
+
+.lead-progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #e8eff7;
+}
+
+.lead-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #168ee8, #23c8a2);
+}
+
+.lead-sprint-title {
+  margin: 0 0 5px;
+  color: #17365c;
+  font-size: 24px;
+}
+
+.lead-sprint-dates {
+  color: #8296ae;
+  font-size: 12px;
+}
+
+.lead-sprint-progress {
+  margin: 20px 0 10px;
+}
+
+.lead-goal-list {
+  display: grid;
+  gap: 15px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+}
+
+.lead-goal-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #506b88;
+  font-size: 13px;
+}
+
+.lead-goal-list i {
+  color: #1aad80;
+}
+
+.lead-task-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.lead-task-form label {
+  display: grid;
+  gap: 6px;
+  color: #506b88;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.lead-task-form input,
+.lead-task-form select,
+.lead-task-form textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid #dce5ef;
+  border-radius: 8px;
+  background: #fff;
+  color: #274563;
+  font: inherit;
+  font-weight: 400;
+}
+
+.lead-task-form textarea {
+  resize: vertical;
+}
+
+.lead-task-status {
+  padding: 5px 8px;
+  border: 1px solid #dce5ef;
+  border-radius: 7px;
+  background: #fff;
+  color: #355574;
+  font: inherit;
+  font-size: 11px;
+}
+
+.lead-task-description,
+.lead-task-submit {
+  grid-column: 1 / -1;
+}
+
+.lead-task-submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lead-task-message {
+  margin: 0;
+  color: #16835d;
+  font-size: 12px;
+}
+
+.lead-task-error {
+  color: #c34a4a;
+}
+
+@media (max-width: 700px) {
+  .lead-table {
+    font-size: 12px;
+  }
+
+  .lead-task-form {
+    grid-template-columns: 1fr;
+  }
+
+  .lead-task-description,
+  .lead-task-submit {
+    grid-column: auto;
+  }
+
+  .lead-task-submit {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lead-performance-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .lead-performance-row .lead-progress-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
