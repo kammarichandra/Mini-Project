@@ -56,7 +56,7 @@ const pageDetails = {
   },
 
   reviews: {
-    title: "Code Reviews",
+    title: " Project Code Reviews",
     subtitle: "Review pull requests and help maintain code quality.",
     icon: "fa-code-branch",
     stats: [
@@ -90,7 +90,7 @@ const pageDetails = {
     ],
   },
   sprint: {
-    title: "Sprint Planning",
+    title: " Project Sprint Planning",
     subtitle: "Plan sprint goals and keep the backlog ready.",
     icon: "fa-rotate",
     stats: [
@@ -155,20 +155,785 @@ const sprintGoals = [
   { label: "Improve performance", done: false },
 ];
 
+const sprintProjectsStorageKey = "teamSyncSprintProjects";
+const sprintProjectStatuses = ["Not Started", "In Progress", "On Hold", "Completed"];
+const emptySprintProjectForm = {
+  name: "",
+  description: "",
+  goals: "",
+  requirements: "",
+  startDate: "",
+  endDate: "",
+  teamMembers: [],
+  status: "Not Started",
+};
+
+function getLeadSprintProjects(ownerEmail) {
+  const savedProjects = window.localStorage.getItem(sprintProjectsStorageKey);
+  if (!savedProjects) return [];
+
+  const parsedProjects = JSON.parse(savedProjects);
+  if (!Array.isArray(parsedProjects)) {
+    throw new Error("Saved projects are not in a valid format.");
+  }
+
+  return parsedProjects.filter(
+    (project) => project && project.ownerEmail?.toLowerCase() === ownerEmail.toLowerCase()
+  );
+}
+
+function getLeadSprintProjectName(project) {
+  const projectName = [project.name, project.projectName, project.title].find(
+    (value) => typeof value === "string" && value.trim()
+  );
+  return projectName?.trim() || "Untitled project";
+}
+
+function getProjectOverviewValue(project, fields, emptyMessage) {
+  for (const field of fields) {
+    const value = project[field];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (Array.isArray(value)) {
+      const entries = value
+        .map((item) => typeof item === "string"
+          ? item.trim()
+          : item?.title || item?.name || item?.description || "")
+        .filter(Boolean);
+      if (entries.length > 0) return entries.map((entry) => `- ${entry}`).join("\n");
+    }
+  }
+  return emptyMessage;
+}
+
 function StatusBadge({ children }) {
   const tone = children.toLowerCase().replaceAll(" ", "-");
   return <span className={`lead-status lead-status-${tone}`}>{children}</span>;
 }
 
-function DataTable({ title, columns, rows }) {
+function getProjectTaskTitle(task) {
+  return task.title || task.task || "Untitled task";
+}
+
+function addCalendarDays(date, days) {
+  const result = new Date(`${date}T12:00:00`);
+  result.setDate(result.getDate() + days);
+  return result.toISOString().slice(0, 10);
+}
+
+function taskMatchesDeveloperSkills(task, developer) {
+  const developerSkills = Array.isArray(developer.skills)
+    ? developer.skills.join(" ")
+    : "";
+  const profile = `${developer.designation || ""} ${developerSkills}`.toLowerCase();
+  const words = `${getProjectTaskTitle(task)} ${task.description || ""}`
+    .toLowerCase()
+    .match(/[a-z0-9+#.]+/g) || [];
+  return words.some((word) => word.length > 2 && profile.includes(word));
+}
+
+function generateProjectAutoSprints({
+  project,
+  tasks,
+  developers,
+  durationWeeks,
+  weeklyCapacity,
+  startDate,
+  existingSprintCount,
+}) {
+  if (!startDate) throw new Error("Choose a start date for the sprint plan.");
+  if (tasks.length === 0) throw new Error("There are no unplanned backlog tasks.");
+
+  const weeks = Number(durationWeeks);
+  const capacityPerWeek = Number(weeklyCapacity);
+  if (!Number.isInteger(weeks) || weeks < 1 || weeks > 4) {
+    throw new Error("Sprint duration must be between one and four weeks.");
+  }
+  if (!Number.isFinite(capacityPerWeek) || capacityPerWeek <= 0) {
+    throw new Error("Developer capacity must be greater than zero hours per week.");
+  }
+
+  const availableDevelopers = developers
+    .filter((developer) => developer.status?.toLowerCase() !== "on leave")
+    .map((developer) => {
+      const availability = Number(developer.availabilityPercent);
+      const percent = Number.isFinite(availability)
+        ? Math.max(0, Math.min(100, availability))
+        : 100;
+      return {
+        ...developer,
+        sprintCapacity: capacityPerWeek * weeks * percent / 100,
+      };
+    })
+    .filter((developer) => developer.sprintCapacity > 0);
+  if (availableDevelopers.length === 0) {
+    throw new Error("No available developers are assigned to this project.");
+  }
+
+  const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+  const orderedTasks = [...tasks].sort((first, second) =>
+    (priorityOrder[first.priority] ?? 1) - (priorityOrder[second.priority] ?? 1) ||
+    String(first.dueDate || "").localeCompare(String(second.dueDate || "")) ||
+    getProjectTaskTitle(first).localeCompare(getProjectTaskTitle(second))
+  );
+  const oversizedTask = orderedTasks.find((task) => {
+    const hours = Number(task.estimatedHours);
+    return Number.isFinite(hours) && hours > Math.max(
+      ...availableDevelopers.map((developer) => developer.sprintCapacity)
+    );
+  });
+  if (oversizedTask) {
+    throw new Error(
+      `"${getProjectTaskTitle(oversizedTask)}" exceeds the capacity of every available developer for one sprint.`
+    );
+  }
+
+  const plans = [];
+  const createPlan = () => {
+    const sprintNumber = existingSprintCount + plans.length + 1;
+    const sprintStart = addCalendarDays(startDate, plans.length * weeks * 7);
+    const plan = {
+      id: `${project.id}-AUTO-${sprintNumber}`,
+      name: `Sprint ${sprintNumber}`,
+      goal: String(project.goals || "").split(/[.!?]/)[0].trim() ||
+        "Complete prioritized backlog tasks",
+      sprintNumber,
+      startDate: sprintStart,
+      endDate: addCalendarDays(sprintStart, weeks * 7 - 1),
+      planningType: "auto",
+      status: "Planned",
+      tasks: [],
+      developerHours: {},
+    };
+    plans.push(plan);
+    return plan;
+  };
+
+  orderedTasks.forEach((task) => {
+    const hours = Number(task.estimatedHours);
+    const taskHours = Number.isFinite(hours) && hours > 0 ? hours : 1;
+    let assignment;
+
+    for (const plan of plans) {
+      const candidates = availableDevelopers
+        .filter((developer) =>
+          (plan.developerHours[developer.email] || 0) + taskHours <= developer.sprintCapacity
+        )
+        .sort((first, second) =>
+          Number(taskMatchesDeveloperSkills(task, second)) -
+            Number(taskMatchesDeveloperSkills(task, first)) ||
+          (plan.developerHours[first.email] || 0) -
+            (plan.developerHours[second.email] || 0) ||
+          first.name.localeCompare(second.name)
+        );
+      if (candidates.length > 0) {
+        assignment = { plan, developer: candidates[0] };
+        break;
+      }
+    }
+
+    if (!assignment) {
+      const plan = createPlan();
+      const developer = [...availableDevelopers].sort((first, second) =>
+        Number(taskMatchesDeveloperSkills(task, second)) -
+          Number(taskMatchesDeveloperSkills(task, first)) ||
+        first.name.localeCompare(second.name)
+      )[0];
+      assignment = { plan, developer };
+    }
+
+    const { plan, developer } = assignment;
+    plan.developerHours[developer.email] =
+      (plan.developerHours[developer.email] || 0) + taskHours;
+    plan.tasks.push({
+      taskId: task.id,
+      title: getProjectTaskTitle(task),
+      description: task.description || "",
+      assigneeEmail: developer.email,
+      assigneeName: developer.name,
+      priority: task.priority || "Medium",
+      estimatedHours: taskHours,
+      startDate: task.startDate || "",
+      dueDate: task.dueDate || "",
+      status: task.status || "To Do",
+    });
+  });
+
+  return plans.map((plan) => ({
+    id: plan.id,
+    name: plan.name,
+    goal: plan.goal,
+    sprintNumber: plan.sprintNumber,
+    startDate: plan.startDate,
+    endDate: plan.endDate,
+    planningType: plan.planningType,
+    status: plan.status,
+    tasks: plan.tasks,
+  }));
+}
+
+function createProjectTaskId(projectId) {
+  return `${projectId}-TASK-${Date.now()}`;
+}
+
+const emptyProjectBacklogTask = {
+  title: "",
+  description: "",
+  assigneeEmail: "",
+  priority: "Medium",
+  estimatedHours: 1,
+  startDate: "",
+  dueDate: "",
+  status: "To Do",
+};
+
+function ProjectSprintPlanningView({ project, employees, onBack, onSaveProject }) {
+  const [planningMode, setPlanningMode] = useState("");
+  const [sprintDuration, setSprintDuration] = useState(2);
+  const [weeklyCapacity, setWeeklyCapacity] = useState(40);
+  const [sprintStartDate, setSprintStartDate] = useState(project.startDate || "");
+  const [generatedSprints, setGeneratedSprints] = useState([]);
+  const [manualForm, setManualForm] = useState({
+    name: "",
+    goal: "",
+    startDate: project.startDate || "",
+    endDate: project.endDate || "",
+    selectedTasks: {},
+  });
+  const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState("");
+  const [taskForm, setTaskForm] = useState(emptyProjectBacklogTask);
+  const [taskSearch, setTaskSearch] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  const projectTeamMembers = Array.isArray(project.teamMembers)
+    ? project.teamMembers
+    : [];
+  const projectMembers = employees.filter((employee) =>
+    projectTeamMembers.some(
+      (email) => email.toLowerCase() === employee.email.toLowerCase()
+    )
+  );
+  const backlog = (Array.isArray(project.backlog) ? project.backlog : [])
+    .map((task, index) => ({
+      ...task,
+      id: String(task.id || task.taskId || `${project.id}-TASK-${index + 1}`),
+    }));
+  const savedSprints = Array.isArray(project.sprints) ? project.sprints : [];
+  const plannedTaskIds = new Set(
+    savedSprints
+      .filter((sprint) => sprint.status !== "Completed")
+      .flatMap((sprint) =>
+        Array.isArray(sprint.tasks)
+          ? sprint.tasks.map((task) => String(task.taskId))
+          : []
+      )
+  );
+  const availableTasks = backlog.filter(
+    (task) =>
+      task.status?.toLowerCase() !== "completed" &&
+      !plannedTaskIds.has(task.id)
+  );
+  const visibleBacklog = backlog.filter((task) =>
+    `${getProjectTaskTitle(task)} ${task.description || ""} ${task.status || ""}`
+      .toLowerCase()
+      .includes(taskSearch.trim().toLowerCase())
+  );
+
+  const openTaskForm = (task) => {
+    setTaskForm(task
+      ? { ...emptyProjectBacklogTask, ...task }
+      : {
+        ...emptyProjectBacklogTask,
+        assigneeEmail: projectMembers[0]?.email || "",
+      });
+    setEditingTaskId(task?.id || "");
+    setTaskFormOpen(true);
+    setError("");
+    setNotice("");
+  };
+
+  const saveBacklogTask = (event) => {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    if (!taskForm.title.trim() || !taskForm.description.trim() ||
+      !taskForm.assigneeEmail || !taskForm.dueDate ||
+      Number(taskForm.estimatedHours) <= 0) {
+      setError("Complete the task details, assign a developer, and enter positive estimated hours.");
+      return;
+    }
+    if (taskForm.startDate && taskForm.dueDate < taskForm.startDate) {
+      setError("The task due date must be on or after its start date.");
+      return;
+    }
+
+    const updatedTask = {
+      ...taskForm,
+      id: editingTaskId || createProjectTaskId(project.id),
+      estimatedHours: Number(taskForm.estimatedHours),
+    };
+    const updatedBacklog = editingTaskId
+      ? backlog.map((task) => task.id === editingTaskId ? updatedTask : task)
+      : [...backlog, updatedTask];
+    try {
+      onSaveProject({ backlog: updatedBacklog });
+      setTaskFormOpen(false);
+      setEditingTaskId("");
+      setNotice(editingTaskId ? "Backlog task updated." : "Backlog task added.");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Could not save this task.");
+    }
+  };
+
+  const deleteBacklogTask = (task) => {
+    if (!window.confirm(`Delete "${getProjectTaskTitle(task)}" from the backlog?`)) return;
+    try {
+      onSaveProject({ backlog: backlog.filter((item) => item.id !== task.id) });
+      setNotice("Backlog task deleted.");
+      setError("");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Could not delete this task.");
+    }
+  };
+
+  const generatePlan = (event) => {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    try {
+      const plans = generateProjectAutoSprints({
+        project,
+        tasks: availableTasks,
+        developers: projectMembers,
+        durationWeeks: sprintDuration,
+        weeklyCapacity,
+        startDate: sprintStartDate,
+        existingSprintCount: savedSprints.length,
+      });
+      setGeneratedSprints(plans);
+    } catch (planError) {
+      setError(planError instanceof Error ? planError.message : "Could not generate the sprint plan.");
+    }
+  };
+
+  const saveGeneratedPlan = () => {
+    if (generatedSprints.length === 0) return;
+    try {
+      onSaveProject({ sprints: [...savedSprints, ...generatedSprints] });
+      setGeneratedSprints([]);
+      setNotice("Generated sprint plan saved.");
+      setError("");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Could not save the sprint plan.");
+    }
+  };
+
+  const toggleManualTask = (task, checked) => {
+    setManualForm((current) => {
+      const selectedTasks = { ...current.selectedTasks };
+      if (checked) {
+        selectedTasks[task.id] = {
+          assigneeEmail: task.assigneeEmail || projectMembers[0]?.email || "",
+          priority: task.priority || "Medium",
+          estimatedHours: task.estimatedHours || 1,
+        };
+      } else {
+        delete selectedTasks[task.id];
+      }
+      return { ...current, selectedTasks };
+    });
+  };
+
+  const saveManualPlan = (event) => {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    const selectedTaskIds = Object.keys(manualForm.selectedTasks);
+    if (!manualForm.name.trim() || !manualForm.goal.trim() ||
+      !manualForm.startDate || !manualForm.endDate ||
+      manualForm.endDate < manualForm.startDate || selectedTaskIds.length === 0) {
+      setError("Enter sprint details, valid dates, and select at least one backlog task.");
+      return;
+    }
+
+    const sprintTasks = selectedTaskIds.map((taskId) => {
+      const task = backlog.find((item) => item.id === taskId);
+      const selection = manualForm.selectedTasks[taskId];
+      const developer = projectMembers.find(
+        (member) => member.email === selection.assigneeEmail
+      );
+      return {
+        taskId,
+        title: getProjectTaskTitle(task || {}),
+        description: task?.description || "",
+        assigneeEmail: selection.assigneeEmail,
+        assigneeName: developer?.name || "",
+        priority: selection.priority,
+        estimatedHours: Number(selection.estimatedHours),
+        startDate: task?.startDate || "",
+        dueDate: task?.dueDate || "",
+        status: task?.status || "To Do",
+      };
+    });
+    if (sprintTasks.some((task) => !task.assigneeEmail || task.estimatedHours <= 0)) {
+      setError("Assign each selected task to a developer and enter positive estimated hours.");
+      return;
+    }
+
+    const sprintNumber = savedSprints.length + 1;
+    const sprint = {
+      id: `${project.id}-MANUAL-${sprintNumber}`,
+      name: manualForm.name.trim(),
+      goal: manualForm.goal.trim(),
+      sprintNumber,
+      startDate: manualForm.startDate,
+      endDate: manualForm.endDate,
+      planningType: "manual",
+      status: "Planned",
+      tasks: sprintTasks,
+    };
+    try {
+      onSaveProject({ sprints: [...savedSprints, sprint] });
+      setManualForm({
+        name: "",
+        goal: "",
+        startDate: project.startDate || "",
+        endDate: project.endDate || "",
+        selectedTasks: {},
+      });
+      setNotice("Manual sprint plan saved.");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Could not save the sprint plan.");
+    }
+  };
+
   return (
-    <section className="workspace-panel workspace-panel-wide">
+    <PageSurface
+      title={getLeadSprintProjectName(project)}
+      subtitle="Project details and sprint planning."
+      icon="fa-diagram-project"
+      className="technical-lead-page"
+    >
+      <section className="workspace-panel workspace-panel-wide">
+        <button className="btn btn-outline-secondary mb-3" type="button" onClick={onBack}>
+          <i className="fa-solid fa-arrow-left me-2" aria-hidden="true" />
+          Back to assigned projects
+        </button>
+        <div className="panel-heading">
+          <h2>Project Overview</h2>
+          <StatusBadge>{project.status || "Not Started"}</StatusBadge>
+        </div>
+        <p>{project.description}</p>
+        <p className="panel-note">{project.startDate} – {project.endDate}</p>
+        <div className="row g-3">
+          <div className="col-md-6">
+            <section className="border rounded-3 bg-light h-100 p-3">
+              <h3 className="h6 text-primary">Project Goals</h3>
+              <p className="mb-0" style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                {getProjectOverviewValue(
+                  project,
+                  ["goals", "projectGoals", "goal"],
+                  "No project goals have been added."
+                )}
+              </p>
+            </section>
+          </div>
+          <div className="col-md-6">
+            <section className="border rounded-3 bg-light h-100 p-3">
+              <h3 className="h6 text-primary">Project Requirements</h3>
+              <p className="mb-0" style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                {getProjectOverviewValue(
+                  project,
+                  ["requirements", "projectRequirements", "requirement"],
+                  "No project requirements have been added."
+                )}
+              </p>
+            </section>
+          </div>
+          <div className="col-12">
+            <h3 className="h6">Team Members</h3>
+            <div className="lead-project-team-cell">
+              {projectMembers.map((member) => (
+                <span className="lead-project-team-chip" key={member.email}>
+                  <span>{member.initials || getEmployeeInitials(member.name)}</span>
+                  {member.name}
+                </span>
+              ))}
+              {projectMembers.length === 0 && <span className="panel-note">No available team members.</span>}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="workspace-panel workspace-panel-wide">
+        <div className="panel-heading">
+          <h2>Sprint Backlog</h2>
+          <span>{backlog.length} tasks</span>
+        </div>
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <input
+            className="form-control"
+            style={{ maxWidth: "320px" }}
+            aria-label="Search backlog tasks"
+            placeholder="Search backlog tasks"
+            value={taskSearch}
+            onChange={(event) => setTaskSearch(event.target.value)}
+          />
+          <button className="workspace-action" type="button" onClick={() => openTaskForm()}>
+            <i className="fa-solid fa-plus me-2" aria-hidden="true" />Add Task
+          </button>
+        </div>
+        {taskFormOpen && (
+          <form className="lead-task-form mb-4" onSubmit={saveBacklogTask}>
+            <label>Task Title
+              <input required value={taskForm.title} onChange={(event) => setTaskForm({ ...taskForm, title: event.target.value })} />
+            </label>
+            <label>Assigned Developer
+              <select required value={taskForm.assigneeEmail} onChange={(event) => setTaskForm({ ...taskForm, assigneeEmail: event.target.value })}>
+                <option value="">Select developer</option>
+                {projectMembers.map((member) => <option key={member.email} value={member.email}>{member.name}</option>)}
+              </select>
+            </label>
+            <label>Priority
+              <select value={taskForm.priority} onChange={(event) => setTaskForm({ ...taskForm, priority: event.target.value })}>
+                {["High", "Medium", "Low"].map((priority) => <option key={priority}>{priority}</option>)}
+              </select>
+            </label>
+            <label>Estimated Hours
+              <input required type="number" min="0.5" step="0.5" value={taskForm.estimatedHours} onChange={(event) => setTaskForm({ ...taskForm, estimatedHours: event.target.value })} />
+            </label>
+            <label>Start Date
+              <input type="date" value={taskForm.startDate} onChange={(event) => setTaskForm({ ...taskForm, startDate: event.target.value })} />
+            </label>
+            <label>Due Date
+              <input required type="date" value={taskForm.dueDate} onChange={(event) => setTaskForm({ ...taskForm, dueDate: event.target.value })} />
+            </label>
+            <label>Task Status
+              <select value={taskForm.status} onChange={(event) => setTaskForm({ ...taskForm, status: event.target.value })}>
+                {["To Do", "In Progress", "Completed"].map((status) => <option key={status}>{status}</option>)}
+              </select>
+            </label>
+            <label className="lead-task-description">Task Description
+              <textarea required rows="2" value={taskForm.description} onChange={(event) => setTaskForm({ ...taskForm, description: event.target.value })} />
+            </label>
+            <div className="lead-task-submit">
+              <div className="d-flex gap-2">
+                <button className="workspace-action" type="submit">{editingTaskId ? "Save Changes" : "Save Task"}</button>
+                <button className="btn btn-outline-secondary" type="button" onClick={() => setTaskFormOpen(false)}>Cancel</button>
+              </div>
+            </div>
+          </form>
+        )}
+        {backlog.length === 0 ? (
+          <p className="panel-note">No backlog tasks yet. Add tasks before creating a sprint plan.</p>
+        ) : visibleBacklog.length === 0 ? (
+          <p className="panel-note">No tasks match your search.</p>
+        ) : (
+          <div className="lead-table-wrap">
+            <table className="lead-table">
+              <thead><tr>
+                <th>Task</th><th>Developer</th><th>Priority</th><th>Estimate</th><th>Due Date</th><th>Status</th><th>Actions</th>
+              </tr></thead>
+              <tbody>
+                {visibleBacklog.map((task) => {
+                  const developer = projectMembers.find((member) =>
+                    member.email === task.assigneeEmail
+                  );
+                  return (
+                    <tr key={task.id}>
+                      <td><strong>{getProjectTaskTitle(task)}</strong><br /><small>{task.description}</small></td>
+                      <td>{developer?.name || "Unassigned"}</td>
+                      <td>{task.priority || "Medium"}</td>
+                      <td>{task.estimatedHours || 1}h</td>
+                      <td>{task.dueDate || "—"}</td>
+                      <td><StatusBadge>{task.status || "To Do"}</StatusBadge></td>
+                      <td>
+                        <div className="d-flex gap-1">
+                          <button className="btn btn-sm btn-outline-primary" type="button" onClick={() => openTaskForm(task)}>Edit</button>
+                          <button className="btn btn-sm btn-outline-danger" type="button" onClick={() => deleteBacklogTask(task)}>Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="workspace-panel workspace-panel-wide">
+        <div className="panel-heading"><h2>Plan a Sprint</h2></div>
+        <div className="d-flex flex-wrap gap-2 mb-3">
+          <button
+            className={`btn ${planningMode === "auto" ? "btn-primary" : "btn-outline-primary"}`}
+            type="button"
+            onClick={() => {
+              setPlanningMode("auto");
+              setGeneratedSprints([]);
+              setError("");
+              setNotice("");
+            }}
+          >
+            <i className="fa-solid fa-wand-magic-sparkles me-2" aria-hidden="true" />Auto Planning
+          </button>
+          <button
+            className={`btn ${planningMode === "manual" ? "btn-primary" : "btn-outline-primary"}`}
+            type="button"
+            onClick={() => {
+              setPlanningMode("manual");
+              setGeneratedSprints([]);
+              setError("");
+              setNotice("");
+            }}
+          >
+            <i className="fa-solid fa-calendar-plus me-2" aria-hidden="true" />Manual Planning
+          </button>
+        </div>
+        {error && <p className="lead-task-message lead-task-error" role="alert">{error}</p>}
+        {notice && <p className="lead-task-message" role="status">{notice}</p>}
+
+        {planningMode === "auto" && (
+          <form className="lead-task-form" onSubmit={generatePlan}>
+            <label>Sprint Duration
+              <select value={sprintDuration} onChange={(event) => setSprintDuration(Number(event.target.value))}>
+                {[1, 2, 3, 4].map((weeks) => <option key={weeks} value={weeks}>{weeks} {weeks === 1 ? "week" : "weeks"}</option>)}
+              </select>
+            </label>
+            <label>Sprint Start Date
+              <input required type="date" value={sprintStartDate} onChange={(event) => setSprintStartDate(event.target.value)} />
+            </label>
+            <label>Developer Capacity (hours per week)
+              <input required type="number" min="1" max="60" value={weeklyCapacity} onChange={(event) => setWeeklyCapacity(Number(event.target.value))} />
+            </label>
+            <p className="panel-note">Plan uses {availableTasks.length} unplanned tasks, priority, estimates, developer capacity, and matching skills.</p>
+            {availableTasks.length === 0 && <p className="panel-note">Add backlog tasks to this project before generating a plan.</p>}
+            <div className="lead-task-submit">
+              <button className="workspace-action" type="submit">Generate Sprint Plan</button>
+            </div>
+          </form>
+        )}
+
+        {planningMode === "manual" && (
+          <form className="lead-task-form" onSubmit={saveManualPlan}>
+            <label>Sprint Name
+              <input required value={manualForm.name} onChange={(event) => setManualForm({ ...manualForm, name: event.target.value })} placeholder="e.g. Sprint 1" />
+            </label>
+            <label>Sprint Goal
+              <input required value={manualForm.goal} onChange={(event) => setManualForm({ ...manualForm, goal: event.target.value })} />
+            </label>
+            <label>Sprint Start Date
+              <input required type="date" value={manualForm.startDate} onChange={(event) => setManualForm({ ...manualForm, startDate: event.target.value })} />
+            </label>
+            <label>Sprint End Date
+              <input required type="date" value={manualForm.endDate} onChange={(event) => setManualForm({ ...manualForm, endDate: event.target.value })} />
+            </label>
+            <div className="lead-task-description">
+              <h3 className="h6">Select backlog tasks</h3>
+              {availableTasks.length === 0 ? (
+                <p className="panel-note">There are no unplanned tasks available.</p>
+              ) : availableTasks.map((task) => {
+                const selection = manualForm.selectedTasks[task.id];
+                return (
+                  <div className="border rounded p-3 mb-2" key={task.id}>
+                    <label className="d-flex align-items-center gap-2">
+                      <input type="checkbox" checked={Boolean(selection)} onChange={(event) => toggleManualTask(task, event.target.checked)} />
+                      <span><strong>{getProjectTaskTitle(task)}</strong><small className="d-block">{task.description}</small></span>
+                    </label>
+                    {selection && (
+                      <div className="row g-2 mt-2">
+                        <div className="col-md-4">
+                          <select className="form-select" aria-label={`Assign ${getProjectTaskTitle(task)}`} value={selection.assigneeEmail} onChange={(event) => setManualForm((current) => ({ ...current, selectedTasks: { ...current.selectedTasks, [task.id]: { ...current.selectedTasks[task.id], assigneeEmail: event.target.value } } }))}>
+                            <option value="">Select developer</option>
+                            {projectMembers.map((member) => <option key={member.email} value={member.email}>{member.name}</option>)}
+                          </select>
+                        </div>
+                        <div className="col-md-4">
+                          <select className="form-select" aria-label={`Priority for ${getProjectTaskTitle(task)}`} value={selection.priority} onChange={(event) => setManualForm((current) => ({ ...current, selectedTasks: { ...current.selectedTasks, [task.id]: { ...current.selectedTasks[task.id], priority: event.target.value } } }))}>
+                            {["High", "Medium", "Low"].map((priority) => <option key={priority}>{priority}</option>)}
+                          </select>
+                        </div>
+                        <div className="col-md-4">
+                          <input className="form-control" aria-label={`Estimated hours for ${getProjectTaskTitle(task)}`} type="number" min="0.5" step="0.5" value={selection.estimatedHours} onChange={(event) => setManualForm((current) => ({ ...current, selectedTasks: { ...current.selectedTasks, [task.id]: { ...current.selectedTasks[task.id], estimatedHours: event.target.value } } }))} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="lead-task-submit">
+              <button className="workspace-action" type="submit" disabled={availableTasks.length === 0}>Save Sprint Plan</button>
+            </div>
+          </form>
+        )}
+      </section>
+
+      {generatedSprints.length > 0 && (
+        <section className="workspace-panel workspace-panel-wide">
+          <div className="panel-heading">
+            <h2>Generated Sprint Plan</h2>
+            <button className="workspace-action" type="button" onClick={saveGeneratedPlan}>Save Sprint Plan</button>
+          </div>
+          {generatedSprints.map((sprint) => (
+            <div className="border rounded p-3 mb-2" key={sprint.id}>
+              <h3 className="h6">{sprint.name} · {sprint.startDate} – {sprint.endDate}</h3>
+              <p>{sprint.goal}</p>
+              {sprint.tasks.map((task) => (
+                <p className="mb-1" key={task.taskId}>
+                  {task.title} · {task.assigneeName} · {task.priority} · {task.estimatedHours}h
+                </p>
+              ))}
+            </div>
+          ))}
+        </section>
+      )}
+
+      <section className="workspace-panel workspace-panel-wide">
+        <div className="panel-heading">
+          <h2>Saved Sprint Plans</h2>
+          <span>{savedSprints.length} sprints</span>
+        </div>
+        {savedSprints.length === 0 ? (
+          <p className="panel-note">No sprint plans have been saved for this project yet.</p>
+        ) : savedSprints.map((sprint) => {
+          const sprintTasks = Array.isArray(sprint.tasks) ? sprint.tasks : [];
+          const developers = [...new Set(sprintTasks.map((task) => task.assigneeName).filter(Boolean))];
+          const completedTasks = sprintTasks.filter((task) => task.status === "Completed").length;
+          return (
+            <div className="border rounded p-3 mb-2" key={sprint.id}>
+              <div className="panel-heading">
+                <h3 className="h6">{sprint.name} · Sprint {sprint.sprintNumber}</h3>
+                <StatusBadge>{sprint.status || "Planned"}</StatusBadge>
+              </div>
+              <p>{sprint.goal}</p>
+              <p className="panel-note">{sprint.startDate} – {sprint.endDate} · {sprintTasks.length} tasks · {completedTasks} completed · {sprintTasks.length - completedTasks} pending</p>
+              <p className="panel-note">Developers: {developers.join(", ") || "Not assigned"} · {sprint.planningType === "auto" ? "Auto planned" : "Manual plan"}</p>
+            </div>
+          );
+        })}
+      </section>
+    </PageSurface>
+  );
+}
+
+function DataTable({
+  title,
+  columns,
+  rows,
+  tableClassName = "",
+  panelClassName = "",
+  countLabel = "items",
+}) {
+  return (
+    <section className={`workspace-panel workspace-panel-wide ${panelClassName}`.trim()}>
       <div className="panel-heading">
         <h2>{title}</h2>
-        <span>{rows.length} items</span>
+        <span>{rows.length} {countLabel}</span>
       </div>
       <div className="lead-table-wrap">
-        <table className="lead-table">
+        <table className={`lead-table ${tableClassName}`.trim()}>
           <thead>
             <tr>{columns.map((column) => <th key={column.key}>{column.label}</th>)}</tr>
           </thead>
@@ -188,6 +953,72 @@ function DataTable({ title, columns, rows }) {
         </table>
       </div>
     </section>
+  );
+}
+
+function ReviewEmployeeDetails({ employee, employeeReviews, workItems, onBack }) {
+  const completedTasks = workItems.filter((task) => task.status === "Completed").length;
+  const activeTasks = workItems.filter((task) => task.status === "In Progress").length;
+
+  return (
+    <PageSurface
+      title={`${employee.name} — Work Details`}
+      subtitle="Pull requests and assigned work recorded in TeamSync."
+      icon="fa-user-check"
+      className="technical-lead-page"
+      stats={[
+        { label: "Pull requests", value: employeeReviews.length, note: "Submitted for review" },
+        { label: "Assigned tasks", value: workItems.length, note: "Recorded tasks" },
+        { label: "Completed", value: completedTasks, note: "Tasks marked complete" },
+        { label: "In progress", value: activeTasks, note: "Currently active" },
+      ]}
+    >
+      <section className="workspace-panel workspace-panel-wide">
+        <button className="workspace-action" type="button" onClick={onBack}>
+          <i className="fa-solid fa-arrow-left" aria-hidden="true" /> Back to pull requests
+        </button>
+        <div className="lead-review-employee-profile">
+          <span className="lead-member-avatar">
+            {getEmployeeInitials(employee.name)}
+          </span>
+          <div>
+            <strong>{employee.name}</strong>
+            <span>{employee.designation || employee.role || "Development team member"}</span>
+            {employee.email && <span>{employee.email}</span>}
+          </div>
+        </div>
+      </section>
+      <DataTable
+        title="Pull requests submitted"
+        columns={[
+          { key: "pr", label: "PR" },
+          { key: "title", label: "Title / work" },
+          { key: "project", label: "Project" },
+          { key: "changes", label: "Changes" },
+          { key: "status", label: "Status" },
+        ]}
+        rows={employeeReviews}
+      />
+      {workItems.length > 0 ? (
+        <DataTable
+          title="Assigned work"
+          columns={[
+            { key: "task", label: "Task" },
+            { key: "description", label: "Description" },
+            { key: "project", label: "Project" },
+            { key: "priority", label: "Priority" },
+            { key: "due", label: "Due date" },
+            { key: "status", label: "Status" },
+          ]}
+          rows={workItems}
+        />
+      ) : (
+        <section className="workspace-panel workspace-panel-wide">
+          <div className="panel-heading"><h2>Assigned work</h2></div>
+          <p className="panel-note">No additional assigned tasks are recorded for this employee.</p>
+        </section>
+      )}
+    </PageSurface>
   );
 }
 
@@ -464,6 +1295,8 @@ function TaskManagement({ employees, teamTasks, onTasksChange, taskLoadError }) 
 
 function TechnicalLeadPage({ page }) {
   const [employees] = useState(getEmployeesFromStorage);
+  const [selectedReviewEmployeeName, setSelectedReviewEmployeeName] = useState("");
+  const currentUser = getCurrentUser();
   const [taskStorage, setTaskStorage] = useState(() => {
     try {
       return { tasks: getTeamTasks(), error: "" };
@@ -474,12 +1307,155 @@ function TechnicalLeadPage({ page }) {
       };
     }
   });
+  const [sprintProjectStorage, setSprintProjectStorage] = useState(() => {
+    try {
+      return {
+        projects: getLeadSprintProjects(currentUser?.email || ""),
+        error: "",
+      };
+    } catch (error) {
+      return {
+        projects: [],
+        error: error instanceof Error ? error.message : "Could not load saved projects.",
+      };
+    }
+  });
+  const [projectFormOpen, setProjectFormOpen] = useState(false);
+  const [projectForm, setProjectForm] = useState(emptySprintProjectForm);
+  const [projectFormError, setProjectFormError] = useState("");
+  const [projectNotice, setProjectNotice] = useState("");
+  const [teamMemberSearch, setTeamMemberSearch] = useState("");
+  const [selectedSprintProjectId, setSelectedSprintProjectId] = useState("");
   const teamTasks = taskStorage.tasks;
-  const currentUser = getCurrentUser();
+  const sprintProjects = sprintProjectStorage.projects;
   const isTechnicalLead = normalizeRole(currentUser?.role) === "Technical Lead";
   const developmentEmployees = employees.filter(
     (employee) => employee.department.trim().toLowerCase() === "development"
   );
+  const selectedReviewEmployee = employees.find(
+    (employee) => employee.name === selectedReviewEmployeeName
+  ) || (selectedReviewEmployeeName
+    ? { name: selectedReviewEmployeeName, designation: "Development team member", email: "" }
+    : null);
+  const selectedEmployeeReviews = selectedReviewEmployee
+    ? reviews.filter((review) => review.author === selectedReviewEmployee.name)
+    : [];
+  const selectedEmployeeWork = selectedReviewEmployee
+    ? [
+      ...tasks
+        .filter((task) => task.assignee === selectedReviewEmployee.name)
+        .map((task, index) => ({
+          ...task,
+          id: `sample-${selectedReviewEmployee.name}-${index}`,
+          description: task.description || "No task description recorded.",
+        })),
+      ...teamTasks
+        .filter((task) =>
+          (selectedReviewEmployee.email &&
+            task.assigneeEmail?.toLowerCase() === selectedReviewEmployee.email.toLowerCase()) ||
+          task.assignee === selectedReviewEmployee.name
+        )
+        .map((task) => ({
+          ...task,
+          id: task.id,
+          task: task.task || task.title || "Untitled task",
+          description: task.description || "No task description recorded.",
+          due: task.due || task.dueDate || "Not set",
+          status: task.status || "Pending",
+          priority: task.priority || "Not set",
+        })),
+    ]
+    : [];
+  const projectMemberOptions = developmentEmployees.filter((employee) =>
+    employee.email &&
+    `${employee.name} ${employee.email} ${employee.designation}`
+      .toLowerCase()
+      .includes(teamMemberSearch.trim().toLowerCase())
+  );
+
+  const handleProjectSubmit = (event) => {
+    event.preventDefault();
+    setProjectFormError("");
+    setProjectNotice("");
+
+    if (
+      !projectForm.name.trim() ||
+      !projectForm.description.trim() ||
+      !projectForm.goals.trim() ||
+      !projectForm.requirements.trim() ||
+      !projectForm.startDate ||
+      !projectForm.endDate ||
+      projectForm.teamMembers.length === 0
+    ) {
+      setProjectFormError("Complete all project fields and select at least one team member.");
+      return;
+    }
+    if (projectForm.endDate < projectForm.startDate) {
+      setProjectFormError("The end date must be on or after the start date.");
+      return;
+    }
+
+    try {
+      const allProjects = JSON.parse(
+        window.localStorage.getItem(sprintProjectsStorageKey) || "[]"
+      );
+      if (!Array.isArray(allProjects)) {
+        throw new Error("Saved projects are not in a valid format.");
+      }
+
+      const project = {
+        ...projectForm,
+        id: `PROJECT-${Date.now()}-${sprintProjects.length + 1}`,
+        ownerEmail: (currentUser?.email || "").toLowerCase(),
+        createdAt: new Date().toISOString(),
+        backlog: [],
+        sprints: [],
+      };
+      const updatedProjects = [...allProjects, project];
+      window.localStorage.setItem(sprintProjectsStorageKey, JSON.stringify(updatedProjects));
+      setSprintProjectStorage({
+        projects: [...sprintProjects, project],
+        error: "",
+      });
+      setProjectForm(emptySprintProjectForm);
+      setProjectFormOpen(false);
+      setProjectNotice("Project saved successfully.");
+    } catch (error) {
+      setProjectFormError(
+        error instanceof Error ? error.message : "Could not save this project."
+      );
+    }
+  };
+
+  const saveSprintProjectChanges = (projectId, changes) => {
+    const allProjects = JSON.parse(
+      window.localStorage.getItem(sprintProjectsStorageKey) || "[]"
+    );
+    if (!Array.isArray(allProjects)) {
+      throw new Error("Saved projects are not in a valid format.");
+    }
+
+    const projectIndex = allProjects.findIndex(
+      (project) =>
+        project.id === projectId &&
+        project.ownerEmail?.toLowerCase() === (currentUser?.email || "").toLowerCase()
+    );
+    if (projectIndex === -1) {
+      throw new Error("This project is no longer available to you.");
+    }
+
+    const updatedProject = { ...allProjects[projectIndex], ...changes };
+    allProjects[projectIndex] = updatedProject;
+    window.localStorage.setItem(sprintProjectsStorageKey, JSON.stringify(allProjects));
+    setSprintProjectStorage((current) => ({
+      ...current,
+      projects: current.projects.map((project) =>
+        project.id === projectId ? updatedProject : project
+      ),
+    }));
+    return updatedProject;
+  };
+
   const details = pageDetails[page] || pageDetails.dashboard;
   const stats = page === "tasks"
     ? (() => {
@@ -508,6 +1484,17 @@ function TechnicalLeadPage({ page }) {
         : stat)
       : details.stats;
 
+  if (page === "reviews" && selectedReviewEmployee) {
+    return (
+      <ReviewEmployeeDetails
+        employee={selectedReviewEmployee}
+        employeeReviews={selectedEmployeeReviews}
+        workItems={selectedEmployeeWork}
+        onBack={() => setSelectedReviewEmployeeName("")}
+      />
+    );
+  }
+
   let content;
   switch (page) {
     case "team":
@@ -533,7 +1520,20 @@ function TechnicalLeadPage({ page }) {
     case "reviews":
       content = <DataTable title="Pull requests" columns={[
         { key: "pr", label: "PR" }, { key: "title", label: "Title" },
-        { key: "author", label: "Author" }, { key: "project", label: "Project" },
+        {
+          key: "author",
+          label: "Author",
+          render: (review) => (
+            <button
+              className="lead-review-author-button"
+              type="button"
+              onClick={() => setSelectedReviewEmployeeName(review.author)}
+            >
+              {review.author}
+            </button>
+          ),
+        },
+        { key: "project", label: "Project" },
         { key: "changes", label: "Changes" }, { key: "status", label: "Status" },
       ]} rows={reviews} />;
       break;
@@ -550,6 +1550,212 @@ function TechnicalLeadPage({ page }) {
     case "sprint":
       content = (
         <>
+          {sprintProjectStorage.error && (
+            <section className="workspace-panel workspace-panel-wide">
+              <p className="lead-task-message lead-task-error" role="alert">
+                Projects could not be loaded: {sprintProjectStorage.error}
+              </p>
+            </section>
+          )}
+          {projectNotice && (
+            <section className="workspace-panel workspace-panel-wide">
+              <p className="lead-task-message" role="status">{projectNotice}</p>
+            </section>
+          )}
+          {projectFormOpen && (
+            <section className="workspace-panel workspace-panel-wide">
+              <div className="panel-heading"><h2>Add Project</h2><span>Required fields</span></div>
+              <form className="lead-task-form" onSubmit={handleProjectSubmit}>
+                <label>
+                  Project Name
+                  <input required value={projectForm.name} onChange={(event) => setProjectForm({ ...projectForm, name: event.target.value })} />
+                </label>
+                <label>
+                  Project Status
+                  <select value={projectForm.status} onChange={(event) => setProjectForm({ ...projectForm, status: event.target.value })}>
+                    {sprintProjectStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
+                  </select>
+                </label>
+                <label>
+                  Start Date
+                  <input required type="date" value={projectForm.startDate} onChange={(event) => setProjectForm({ ...projectForm, startDate: event.target.value })} />
+                </label>
+                <label>
+                  End Date
+                  <input required type="date" value={projectForm.endDate} onChange={(event) => setProjectForm({ ...projectForm, endDate: event.target.value })} />
+                </label>
+                <label className="lead-task-description">
+                  Project Description
+                  <textarea required rows="3" value={projectForm.description} onChange={(event) => setProjectForm({ ...projectForm, description: event.target.value })} />
+                </label>
+                <label className="lead-task-description">
+                  Project Goals
+                  <textarea required rows="3" value={projectForm.goals} onChange={(event) => setProjectForm({ ...projectForm, goals: event.target.value })} />
+                </label>
+                <label className="lead-task-description">
+                  Project Requirements
+                  <textarea required rows="3" value={projectForm.requirements} onChange={(event) => setProjectForm({ ...projectForm, requirements: event.target.value })} />
+                </label>
+                <fieldset className="lead-task-description lead-team-picker">
+                  <legend>Team Members</legend>
+                  <div className="lead-team-picker-header">
+                    <p>Select developers to add to this project team.</p>
+                    <span className="lead-team-count">{projectForm.teamMembers.length} selected</span>
+                  </div>
+                  <div className="lead-team-picker-tools">
+                    <label className="lead-team-search">
+                      <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
+                      <input
+                        type="search"
+                        aria-label="Search team members"
+                        placeholder="Search by name, role, or email"
+                        value={teamMemberSearch}
+                        onChange={(event) => setTeamMemberSearch(event.target.value)}
+                      />
+                    </label>
+                    {projectForm.teamMembers.length > 0 && (
+                      <button
+                        className="lead-team-clear"
+                        type="button"
+                        onClick={() => setProjectForm({ ...projectForm, teamMembers: [] })}
+                      >
+                        Clear selection
+                      </button>
+                    )}
+                  </div>
+                  {projectMemberOptions.length > 0 ? (
+                    <div className="lead-team-grid">
+                      {projectMemberOptions.map((employee) => {
+                        const selected = projectForm.teamMembers.includes(employee.email);
+                        return (
+                          <label
+                            className={`lead-team-option${selected ? " selected" : ""}`}
+                            key={employee.email}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              onChange={(event) => setProjectForm((current) => ({
+                                ...current,
+                                teamMembers: event.target.checked
+                                  ? [...current.teamMembers, employee.email]
+                                  : current.teamMembers.filter((email) => email !== employee.email),
+                              }))}
+                            />
+                            <span className="lead-team-avatar">
+                              {employee.initials || getEmployeeInitials(employee.name)}
+                            </span>
+                            <span className="lead-team-copy">
+                              <strong>{employee.name}</strong>
+                              <small>{employee.designation}</small>
+                              <small>{employee.email}</small>
+                            </span>
+                            <span className="lead-team-check" aria-hidden="true">
+                              {selected && <i className="fa-solid fa-check" />}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="lead-team-empty">
+                      {developmentEmployees.some((employee) => employee.email)
+                        ? "No team members match your search."
+                        : "No Development team members with email addresses are available."}
+                    </p>
+                  )}
+                  {projectForm.teamMembers.length === 0 && (
+                    <small className="lead-team-hint">Choose at least one team member.</small>
+                  )}
+                </fieldset>
+                <div className="lead-task-submit">
+                  {projectFormError && <p className="lead-task-message lead-task-error" role="alert">{projectFormError}</p>}
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button className="workspace-action" type="submit">Save Project</button>
+                    <button className="btn btn-outline-secondary" type="button" onClick={() => {
+                      setProjectFormOpen(false);
+                      setProjectFormError("");
+                    }}>Cancel</button>
+                  </div>
+                </div>
+              </form>
+            </section>
+          )}
+          {sprintProjects.length === 0 ? (
+            <section className="workspace-panel workspace-panel-wide">
+              <div className="panel-heading"><h2>Projects</h2></div>
+              <p className="panel-note">No projects yet. Select Add Project to create one.</p>
+            </section>
+          ) : (
+            <DataTable
+              title="Assigned projects"
+              tableClassName="lead-table-projects"
+              panelClassName="lead-projects-table-panel"
+              countLabel="projects"
+              columns={[
+                {
+                  key: "name",
+                  label: "Project",
+                  render: (project) => (
+                    <div className="lead-project-name-cell">
+                      <button
+                        className="btn btn-link p-0 text-start text-decoration-none fw-semibold"
+                        type="button"
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          whiteSpace: "normal",
+                          overflowWrap: "anywhere",
+                          lineHeight: 1.4,
+                        }}
+                        title={`View details for ${getLeadSprintProjectName(project)}`}
+                        onClick={() => {
+                          setSelectedSprintProjectId(project.id);
+                          setProjectNotice("");
+                        }}
+                      >
+                        <strong>{getLeadSprintProjectName(project)}</strong>
+                        <small className="d-block fw-normal">View details</small>
+                      </button>
+                    </div>
+                  ),
+                },
+                {
+                  key: "description",
+                  label: "Description",
+                  render: (project) => (
+                    <span className="lead-project-description-cell" title={project.description}>
+                      {project.description}
+                    </span>
+                  ),
+                },
+                { key: "startDate", label: "Start date" },
+                { key: "endDate", label: "End date" },
+                { key: "status", label: "Status" },
+                {
+                  key: "team",
+                  label: "Team members",
+                  render: (project) => (
+                    <div className="lead-project-team-cell">
+                      {(project.teamMembers || []).map((email) => {
+                        const member = developmentEmployees.find(
+                          (employee) => employee.email === email
+                        );
+                        const name = member?.name || email;
+                        return (
+                          <span className="lead-project-team-chip" key={email} title={name}>
+                            <span>{member?.initials || getEmployeeInitials(name)}</span>
+                            {name}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ),
+                },
+              ]}
+              rows={sprintProjects}
+            />
+          )}
           <section className="workspace-panel">
             <div className="panel-heading"><h2>Current sprint</h2><StatusBadge>Active</StatusBadge></div>
             <h3 className="lead-sprint-title">Sprint 11</h3>
@@ -610,8 +1816,39 @@ function TechnicalLeadPage({ page }) {
       );
   }
 
+  const selectedSprintProject = sprintProjects.find(
+    (project) => project.id === selectedSprintProjectId
+  );
+  if (page === "sprint" && selectedSprintProject) {
+    return (
+      <ProjectSprintPlanningView
+        project={selectedSprintProject}
+        employees={developmentEmployees}
+        onBack={() => {
+          setSelectedSprintProjectId("");
+          setProjectNotice("");
+        }}
+        onSaveProject={(changes) =>
+          saveSprintProjectChanges(selectedSprintProject.id, changes)
+        }
+      />
+    );
+  }
+
   return (
-    <PageSurface {...details} stats={stats} className="technical-lead-page">
+    <PageSurface
+      {...details}
+      stats={stats}
+      actionLabel={page === "sprint" && !projectFormOpen ? "Add Project" : undefined}
+      onAction={() => {
+        setProjectForm(emptySprintProjectForm);
+        setProjectFormError("");
+        setProjectNotice("");
+        setTeamMemberSearch("");
+        setProjectFormOpen(true);
+      }}
+      className="technical-lead-page"
+    >
       {content}
     </PageSurface>
   );

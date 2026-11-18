@@ -12,9 +12,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     ["/code-reviews", "fa-code-branch", "Code Reviews"],
     ["/bug-tracking", "fa-bug", "Bug Tracking"],
     ["/performance", "fa-arrow-trend-up", "Team Performance"],
-    ["/sprint-planning", "fa-rotate", "Sprint Planning"],
+    ["/sprint-planning", "fa-rotate", " Project Sprint Planning"],
     ["/Reports", "fa-chart-column", "Reports"],
-   
     ["/settings", "fa-gear", "Settings"]
   ];
   const payrollLinks = role === "Payroll"
@@ -24,8 +23,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         ["/Payroll/process", "fa-calculator", "Process Payroll"],
         ["/Payroll/payslips", "fa-file-invoice-dollar", "Payslips"],
         ["/Payroll/history", "fa-clock-rotate-left", "Payroll History"],
-        ["/Payroll/reports", "fa-chart-column", "Payroll Reports"],
-        ["/settings", "fa-gear", "Settings"]
+        ["/Payroll/reports", "fa-chart-column", "Payroll Reports"]
       ]
     : [["/Payroll", "fa-credit-card", "Payroll"]];
   const defaultLinks = [

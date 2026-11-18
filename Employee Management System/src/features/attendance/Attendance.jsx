@@ -881,9 +881,7 @@ function Attendance() {
             </div>
             {!isSelectedDateToday && <p className="attendance-date-note">Viewing attendance for a different date.</p>}
 
-
             {/* // emp role attendence table */}
-
 
             {visibleEmployees.length ? (
               <div className="mini-table attendance-table">
@@ -903,19 +901,14 @@ function Attendance() {
                 {visibleEmployees.map((employee) => {
                   const record = selectedDateRecords[employee.id] || {};
                   const timeSummary = getAttendanceTimeSummary(record);
-
-                  const availability =
-                    employeeAvailability[employee.id] || "Keep available";
-
+                  const availability = employeeAvailability[employee.id] || "Keep available";
                   const initials = employee.name
                     .split(/\s+/)
                     .map((part) => part[0])
                     .join("")
                     .slice(0, 2)
                     .toUpperCase();
-
-                  const isDisabled =
-                    isSelectedDateFuture || employee.status === "On Leave";
+                  const isDisabled = isSelectedDateFuture || employee.status === "On Leave";
 
                   return (
                     <div
@@ -1259,9 +1252,7 @@ function Attendance() {
                       <ul className="attendance-department-legend">
                         {departmentAttendance.map((department) => (
                           <li key={department.name}>
-                            <span
-                              className="attendance-department-swatch"
-                              style={{ backgroundColor: department.color }}
+                            <span className="attendance-department-swatch" style={{ backgroundColor: department.color }}
                               aria-hidden="true"
                             ></span>
                             <span className="attendance-department-name" title={department.name}>
@@ -1311,8 +1302,7 @@ function Attendance() {
               })}
             </ul>
           </section>
-      <Modal
-        show={Boolean(attendanceModal)}
+      <Modal show={Boolean(attendanceModal)}
         title={attendanceModal?.mode === "edit" ? "Edit attendance" : "Attendance details"}
         onClose={() => setAttendanceModal(null)}
         onSave={saveAttendance}

@@ -113,7 +113,7 @@ function Register() {
                   <small className="register-role-hint">
                     Manage employee salaries, deductions, payroll processing, and payslips.
                   </small>
-                )}
+                )} 
                 {form.role === "Technical Lead" && (
                   <small className="register-role-hint">
                     Manage engineering teams, projects, tasks, code reviews, sprints, and reports.
