@@ -9,7 +9,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     ["/my-team", "fa-people-group", "My Team"],
     ["/projects", "fa-diagram-project", "Projects"],
     ["/tasks", "fa-list-check", "Tasks"],
-    ["/code-reviews", "fa-code-branch", "Code Reviews"],
+    ["/code-reviews", "fa-code-branch", " Project Code Reviews"],
     ["/bug-tracking", "fa-bug", "Bug Tracking"],
     ["/performance", "fa-arrow-trend-up", "Team Performance"],
     ["/sprint-planning", "fa-rotate", " Project Sprint Planning"],

@@ -17,6 +17,7 @@ const FieldIcon = ({ type }) => {
 };
 
 function Register() {
+
   const navigate = useNavigate();
   const [form, setForm] = useState({ fullName: "", email: "", role: "Employee", password: "", confirmPassword: "" });
   const [accepted, setAccepted] = useState(false);

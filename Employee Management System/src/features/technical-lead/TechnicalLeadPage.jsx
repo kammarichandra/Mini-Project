@@ -1022,29 +1022,52 @@ function ReviewEmployeeDetails({ employee, employeeReviews, workItems, onBack })
   );
 }
 
-function MemberCards({ members }) {
+function MemberCards({ members, lead }) {
+  const teamMembers = members.filter(
+    (member) =>
+      !lead?.email ||
+      member.email.toLowerCase() !== lead.email.toLowerCase()
+  );
+  const leadName = lead?.fullName || "Technical Lead";
+
   return (
     <section className="workspace-panel workspace-panel-wide">
       <div className="panel-heading">
         <h2>Development team</h2>
         <span>{members.length} employees</span>
       </div>
-      <div className="lead-member-grid">
-
-        {members.map((member) => (
-
-          <article className="lead-member-card" key={member.id}>
-            <span className="lead-member-avatar">{member.initials || getEmployeeInitials(member.name)}</span>
-            <strong>{member.name}</strong>
-            <span>{member.designation}</span>
-            <span>{member.email || "No email on file"}</span>
-            <StatusBadge>{member.status}</StatusBadge>
-          </article>
-
-        ))}
-
-        {members.length === 0 && (
-          <p className="panel-note">No employees are currently assigned to the Development department.</p>
+      <div className="lead-team-tree-scroll">
+        <ul className="lead-team-tree" aria-label="Development team reporting structure">
+          <li className="lead-team-tree-root">
+            <article className="lead-member-card lead-member-card-lead">
+              <span className="lead-member-avatar">{getEmployeeInitials(leadName)}</span>
+              <strong>{leadName}</strong>
+              <span>Technical Lead</span>
+              {lead?.email && <span>{lead.email}</span>}
+            </article>
+            {teamMembers.length > 0 && (
+              <ul className="lead-team-tree-branches">
+                {teamMembers.map((member) => (
+                  <li className="lead-team-tree-branch" key={member.id}>
+                    <article className="lead-member-card">
+                      <span className="lead-member-avatar">
+                        {member.initials || getEmployeeInitials(member.name)}
+                      </span>
+                      <strong>{member.name}</strong>
+                      <span>{member.designation}</span>
+                      <span>{member.email || "No email on file"}</span>
+                      <StatusBadge>{member.status}</StatusBadge>
+                    </article>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        </ul>
+        {teamMembers.length === 0 && (
+          <p className="panel-note lead-team-tree-empty">
+            No employees are currently assigned to the Development department.
+          </p>
         )}
       </div>
     </section>
@@ -1498,7 +1521,7 @@ function TechnicalLeadPage({ page }) {
   let content;
   switch (page) {
     case "team":
-      content = <MemberCards members={developmentEmployees} />;
+      content = <MemberCards members={developmentEmployees} lead={currentUser} />;
       break;
     case "projects":
       content = <DataTable title="Project overview" columns={[
