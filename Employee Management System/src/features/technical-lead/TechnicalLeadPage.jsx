@@ -3,6 +3,8 @@ import PageSurface from "@/shared/components/PageSurface";
 import { getCurrentUser, normalizeRole } from "@/shared/utils/auth";
 import { getEmployeeInitials, getEmployeesFromStorage,} from "@/shared/utils/employees";
 import { getTeamTasks, saveTeamTask, updateTeamTaskStatus,} from "@/shared/utils/teamTasks";
+import { bugs, isUnresolvedBug } from "@/shared/data/bugs";
+import Modal from "@/shared/components/common/Modal";
 import "./TechnicalLeadPage.css";
 
 // Keep page labels and summary numbers together so each workspace page is easy to scan.
@@ -129,18 +131,17 @@ const tasks = [
 ];
 
 const reviews = [
-  { pr: "#245", title: "Fix login issue", author: "Anil Kumar", project: "TeamSync EMS", changes: "+12 / -3", status: "Review" },
-  { pr: "#242", title: "Update charts", author: "Riya Sharma", project: "Payroll Module", changes: "+87 / -20", status: "Review" },
-  { pr: "#239", title: "Refactor API", author: "Vamsi P", project: "TeamSync EMS", changes: "+45 / -10", status: "Review" },
-  { pr: "#238", title: "UI improvements", author: "Sneha K", project: "Reports Module", changes: "+30 / -18", status: "Approved" },
+  { pr: "#245", title: "Fix login issue", purpose: "Resolve a login failure and make authentication more reliable.", author: "Anil Kumar", project: "TeamSync EMS", changes: "+12 / -3", status: "Review" },
+  { pr: "#242", title: "Update charts", purpose: "Improve the payroll dashboard charts so salary data is easier to understand.", author: "Riya Sharma", project: "Payroll Module", changes: "+87 / -20", status: "Review" },
+  { pr: "#239", title: "Refactor API", purpose: "Simplify the project API integration and improve request handling.", author: "Vamsi P", project: "TeamSync EMS", changes: "+45 / -10", status: "Review" },
+  { pr: "#238", title: "UI improvements", purpose: "Make report screens clearer and improve their visual consistency.", author: "Sneha K", project: "Reports Module", changes: "+30 / -18", status: "Approved" },
 ];
 
-const bugs = [
-  { id: "BUG-001", title: "Dashboard not loading", project: "TeamSync EMS", priority: "High", status: "Open" },
-  { id: "BUG-002", title: "Print not working", project: "Payroll Module", priority: "Medium", status: "In Progress" },
-  { id: "BUG-003", title: "Data mismatch", project: "Reports Module", priority: "High", status: "Open" },
-  { id: "BUG-004", title: "UI alignment issue", project: "TeamSync EMS", priority: "Low", status: "Resolved" },
-];
+const reviewProjectDescriptions = {
+  "TeamSync EMS": "Employee management platform for organizing people, attendance, tasks, and team workflows.",
+  "Payroll Module": "Payroll tools for managing employee salary information and clear payroll reporting.",
+  "Reports Module": "Reporting tools that help teams review operational data and project outcomes.",
+};
 
 const teamPerformance = [
   { name: "Anil Kumar", role: "Frontend Developer", score: 95 },
@@ -187,6 +188,45 @@ function getLeadSprintProjectName(project) {
     (value) => typeof value === "string" && value.trim()
   );
   return projectName?.trim() || "Untitled project";
+}
+
+function getReviewProjectTasks(projectName, project, teamTasks) {
+  const projectNameKey = projectName.trim().toLowerCase();
+  const backlogTasks = (Array.isArray(project?.backlog) ? project.backlog : [])
+    .map((task, index) => ({
+      ...task,
+      id: `backlog-${task.id || index}`,
+      task: getProjectTaskTitle(task),
+      status: task.status || "Pending",
+    }));
+  const sprintTasks = (Array.isArray(project?.sprints) ? project.sprints : [])
+    .flatMap((sprint) =>
+      (Array.isArray(sprint.tasks) ? sprint.tasks : []).map((task, index) => ({
+        ...task,
+        id: `sprint-${sprint.id || sprint.sprintNumber || "plan"}-${task.taskId || index}`,
+        task: task.title || task.task || "Untitled task",
+        status: task.status || sprint.status || "Planned",
+      }))
+    );
+  const assignedTasks = teamTasks
+    .filter((task) => String(task.project || "").trim().toLowerCase() === projectNameKey)
+    .map((task, index) => ({
+      ...task,
+      id: `assigned-${task.id || index}`,
+      task: task.task || task.title || "Untitled task",
+      assigneeName: task.assigneeName || task.assignee,
+      status: task.status || "Pending",
+    }));
+  const sampleTasks = tasks
+    .filter((task) => task.project.trim().toLowerCase() === projectNameKey)
+    .map((task, index) => ({
+      ...task,
+      id: `sample-${projectNameKey}-${index}`,
+      task: task.task,
+      assigneeName: task.assignee,
+      description: task.description || "No task description recorded.",
+    }));
+  return [...backlogTasks, ...sprintTasks, ...assignedTasks, ...sampleTasks];
 }
 
 function getProjectOverviewValue(project, fields, emptyMessage) {
@@ -1022,6 +1062,143 @@ function ReviewEmployeeDetails({ employee, employeeReviews, workItems, onBack })
   );
 }
 
+function ReviewProjectDetails({
+  projectName,
+  project,
+  projectReviews,
+  teamMembers,
+  projectTasks,
+  onBack,
+  onSelectEmployee,
+}) {
+  return (
+    <PageSurface
+      title={projectName}
+      subtitle="Project overview, team progress, and code submitted for review."
+      icon="fa-diagram-project"
+      className="technical-lead-page"
+      stats={[
+        { label: "Pull requests", value: projectReviews.length, note: "Submitted by project members" },
+        { label: "Awaiting review", value: projectReviews.filter((review) => review.status === "Review").length, note: "Needs technical review", tone: "warning" },
+        { label: "Project members", value: teamMembers.length, note: "Assigned or contributing" },
+        { label: "Recorded tasks", value: projectTasks.length, note: "Project work items" },
+      ]}
+    >
+      <section className="workspace-panel workspace-panel-wide">
+        <button className="workspace-action" type="button" onClick={onBack}>
+          <i className="fa-solid fa-arrow-left" aria-hidden="true" /> Back to project reviews
+        </button>
+        <div className="lead-review-project-overview">
+          <div className="panel-heading">
+            <h2>Project details</h2>
+            {project?.status && <StatusBadge>{project.status}</StatusBadge>}
+          </div>
+          <p>{project?.description || reviewProjectDescriptions[projectName] || "Project details have not been added yet."}</p>
+          {(project?.startDate || project?.endDate) && (
+            <p className="panel-note">
+              {project.startDate || "Start date not set"} – {project.endDate || "End date not set"}
+            </p>
+          )}
+          {project?.goals && (
+            <div className="lead-review-project-meta">
+              <strong>Project goals</strong>
+              <p>{getProjectOverviewValue(project, ["goals", "projectGoals", "goal"], "No project goals have been added.")}</p>
+            </div>
+          )}
+          {project?.requirements && (
+            <div className="lead-review-project-meta">
+              <strong>Requirements</strong>
+              <p>{getProjectOverviewValue(project, ["requirements", "projectRequirements", "requirement"], "No requirements have been added.")}</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="workspace-panel workspace-panel-wide">
+        <div className="panel-heading">
+          <h2>Project team</h2>
+          <span>{teamMembers.length} members</span>
+        </div>
+        {teamMembers.length > 0 ? (
+          <div className="lead-review-team-grid">
+            {teamMembers.map((member) => (
+              <article className="lead-review-team-member" key={member.email || member.name}>
+                <span className="lead-member-avatar">
+                  {member.initials || getEmployeeInitials(member.name)}
+                </span>
+                <div>
+                  <strong>{member.name}</strong>
+                  <span>{member.designation || member.role || "Development team member"}</span>
+                  {member.status && <StatusBadge>{member.status}</StatusBadge>}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="panel-note">No assigned team roster is available. Pull request contributors are listed below.</p>
+        )}
+      </section>
+
+      <section className="workspace-panel workspace-panel-wide">
+        <div className="panel-heading">
+          <h2>Member code contributions</h2>
+          <span>{projectReviews.length} pull requests</span>
+        </div>
+        <div className="lead-review-contribution-list">
+          {projectReviews.map((review) => (
+            <article className="lead-review-contribution" key={review.pr}>
+              <div className="lead-review-contribution-heading">
+                <div>
+                  <span className="lead-review-pr-number">{review.pr}</span>
+                  <h3>{review.title}</h3>
+                </div>
+                <StatusBadge>{review.status}</StatusBadge>
+              </div>
+              <p>{review.purpose || "Purpose not provided for this change."}</p>
+              <div className="lead-review-contribution-meta">
+                <span>
+                  Submitted by{" "}
+                  <button
+                    className="lead-review-author-button"
+                    type="button"
+                    onClick={() => onSelectEmployee(review.author)}
+                  >
+                    {review.author}
+                  </button>
+                </span>
+                <span>{review.changes} lines</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="workspace-panel workspace-panel-wide">
+        <div className="panel-heading">
+          <h2>Recorded project work</h2>
+          <span>{projectTasks.length} tasks</span>
+        </div>
+        {projectTasks.length > 0 ? (
+          <div className="lead-review-project-tasks">
+            {projectTasks.map((task) => (
+              <article className="lead-review-project-task" key={task.id}>
+                <div>
+                  <strong>{getProjectTaskTitle(task)}</strong>
+                  <span>{task.description || "No task description recorded."}</span>
+                  <small>{task.assigneeName || task.assignee || "Unassigned"}</small>
+                </div>
+                <StatusBadge>{task.status || "Pending"}</StatusBadge>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="panel-note">No project task or sprint progress has been recorded yet.</p>
+        )}
+      </section>
+    </PageSurface>
+  );
+}
+
 function MemberCards({ members, lead }) {
   const teamMembers = members.filter(
     (member) =>
@@ -1319,6 +1496,8 @@ function TaskManagement({ employees, teamTasks, onTasksChange, taskLoadError }) 
 function TechnicalLeadPage({ page }) {
   const [employees] = useState(getEmployeesFromStorage);
   const [selectedReviewEmployeeName, setSelectedReviewEmployeeName] = useState("");
+  const [selectedReviewProjectName, setSelectedReviewProjectName] = useState("");
+  const [selectedBug, setSelectedBug] = useState(null);
   const currentUser = getCurrentUser();
   const [taskStorage, setTaskStorage] = useState(() => {
     try {
@@ -1388,6 +1567,43 @@ function TechnicalLeadPage({ page }) {
           priority: task.priority || "Not set",
         })),
     ]
+    : [];
+  const reviewProjects = [...new Set(reviews.map((review) => review.project))].map((projectName) => {
+    const projectReviews = reviews.filter((review) => review.project === projectName);
+    const savedProject = sprintProjects.find(
+      (project) => getLeadSprintProjectName(project).toLowerCase() === projectName.toLowerCase()
+    );
+    const assignedMembers = (Array.isArray(savedProject?.teamMembers) ? savedProject.teamMembers : [])
+      .map((email) => typeof email === "string"
+        ? employees.find(
+          (employee) => employee.email?.toLowerCase() === email.toLowerCase()
+        )
+        : undefined)
+      .filter(Boolean);
+    const contributors = projectReviews.map((review) =>
+      employees.find((employee) => employee.name === review.author) ||
+      { name: review.author, designation: "Development team member" }
+    );
+    const members = [...new Map(
+      [...assignedMembers, ...contributors].map((member) => [
+        (member.email || member.name).toLowerCase(),
+        member,
+      ])
+    ).values()];
+    return {
+      name: projectName,
+      reviews: projectReviews,
+      project: savedProject,
+      members,
+      description: savedProject?.description || reviewProjectDescriptions[projectName],
+    };
+  });
+  const selectedReviewProject = reviewProjects.find(
+    (project) => project.name === selectedReviewProjectName
+  );
+  const selectedSavedReviewProject = selectedReviewProject?.project;
+  const selectedReviewProjectTasks = selectedReviewProject
+    ? getReviewProjectTasks(selectedReviewProject.name, selectedSavedReviewProject, teamTasks)
     : [];
   const projectMemberOptions = developmentEmployees.filter((employee) =>
     employee.email &&
@@ -1480,7 +1696,15 @@ function TechnicalLeadPage({ page }) {
   };
 
   const details = pageDetails[page] || pageDetails.dashboard;
-  const stats = page === "tasks"
+  const unresolvedBugs = bugs.filter(isUnresolvedBug);
+  const stats = page === "bugs"
+    ? [
+      { label: "All bugs", value: bugs.length, note: "Reported issues" },
+      { label: "Unfixed", value: unresolvedBugs.length, note: "Needs attention", tone: "warning" },
+      { label: "In progress", value: bugs.filter((bug) => bug.status === "In Progress").length, note: "Being worked on" },
+      { label: "Resolved", value: bugs.filter((bug) => !isUnresolvedBug(bug)).length, note: "Recently fixed" },
+    ]
+    : page === "tasks"
     ? (() => {
       const tasksForUser = isTechnicalLead
         ? teamTasks
@@ -1506,6 +1730,23 @@ function TechnicalLeadPage({ page }) {
         ? { ...stat, value: developmentEmployees.length, note: "In Development" }
         : stat)
       : details.stats;
+
+  if (page === "reviews" && selectedReviewProject) {
+    return (
+      <ReviewProjectDetails
+        projectName={selectedReviewProject.name}
+        project={selectedSavedReviewProject}
+        projectReviews={selectedReviewProject.reviews}
+        teamMembers={selectedReviewProject.members}
+        projectTasks={selectedReviewProjectTasks}
+        onBack={() => setSelectedReviewProjectName("")}
+        onSelectEmployee={(name) => {
+          setSelectedReviewProjectName("");
+          setSelectedReviewEmployeeName(name);
+        }}
+      />
+    );
+  }
 
   if (page === "reviews" && selectedReviewEmployee) {
     return (
@@ -1541,31 +1782,120 @@ function TechnicalLeadPage({ page }) {
       );
       break;
     case "reviews":
-      content = <DataTable title="Pull requests" columns={[
-        { key: "pr", label: "PR" }, { key: "title", label: "Title" },
-        {
-          key: "author",
-          label: "Author",
-          render: (review) => (
-            <button
-              className="lead-review-author-button"
-              type="button"
-              onClick={() => setSelectedReviewEmployeeName(review.author)}
-            >
-              {review.author}
-            </button>
-          ),
-        },
-        { key: "project", label: "Project" },
-        { key: "changes", label: "Changes" }, { key: "status", label: "Status" },
-      ]} rows={reviews} />;
+      content = (
+        <section className="workspace-panel workspace-panel-wide">
+          <div className="panel-heading">
+            <h2>Projects with pull requests</h2>
+            <span>{reviewProjects.length} projects</span>
+          </div>
+          <div className="lead-review-project-grid">
+            {reviewProjects.map((project) => (
+              <button
+                className="lead-review-project-card"
+                key={project.name}
+                type="button"
+                onClick={() => {
+                  setSelectedReviewEmployeeName("");
+                  setSelectedReviewProjectName(project.name);
+                }}
+                aria-label={`View ${project.name} project details and pull requests`}
+              >
+                <span className="lead-review-project-icon" aria-hidden="true">
+                  <i className="fa-solid fa-diagram-project" />
+                </span>
+                <span className="lead-review-project-card-copy">
+                  <strong>{project.name}</strong>
+                  <span>{project.description || "Project details have not been added yet."}</span>
+                </span>
+                <span className="lead-review-project-card-stats">
+                  <span><strong>{project.reviews.length}</strong> pull requests</span>
+                  <span><strong>{project.members.length}</strong> team members</span>
+                  <span><strong>{project.reviews.filter((review) => review.status === "Review").length}</strong> awaiting review</span>
+                </span>
+                <span className="lead-review-project-contributors">
+                  {project.members.slice(0, 4).map((member) => (
+                    <span
+                      className="lead-review-project-avatar"
+                      key={member.email || member.name}
+                      title={member.name}
+                    >
+                      {member.initials || getEmployeeInitials(member.name)}
+                    </span>
+                  ))}
+                  <span className="lead-review-open-label">View project details <i className="fa-solid fa-arrow-right" aria-hidden="true" /></span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      );
       break;
     case "bugs":
-      content = <DataTable title="Reported bugs" columns={[
-        { key: "id", label: "ID" }, { key: "title", label: "Title" },
-        { key: "project", label: "Project" }, { key: "priority", label: "Priority" },
-        { key: "status", label: "Status" },
-      ]} rows={bugs} />;
+      content = (
+        <>
+          <DataTable
+            title="Reported bugs"
+            columns={[
+              {
+                key: "id",
+                label: "Bug ID",
+                render: (bug) => (
+                  <span className="lead-bug-id-cell">
+                    {isUnresolvedBug(bug) && (
+                      <span
+                        className="lead-bug-pending-dot"
+                        role="img"
+                        aria-label="Unfixed bug"
+                        title="This bug is not fixed"
+                      />
+                    )}
+                    {bug.id}
+                  </span>
+                ),
+              },
+              {
+                key: "title",
+                label: "Issue",
+                render: (bug) => (
+                  <button
+                    className="lead-bug-table-link"
+                    type="button"
+                    onClick={() => setSelectedBug(bug)}
+                    aria-label={`View details for ${bug.id}: ${bug.title}`}
+                  >
+                    {bug.title}
+                  </button>
+                ),
+              },
+              { key: "project", label: "Project" },
+              { key: "priority", label: "Priority" },
+              { key: "status", label: "Status" },
+            ]}
+            rows={bugs}
+          />
+          <Modal
+            show={Boolean(selectedBug)}
+            title={selectedBug ? `${selectedBug.id} — ${selectedBug.title}` : "Bug details"}
+            onClose={() => setSelectedBug(null)}
+            showSave={false}
+          >
+            {selectedBug && (
+              <div className="lead-bug-details">
+                <p>{selectedBug.description}</p>
+                <dl>
+                  <div><dt>Project</dt><dd>{selectedBug.project}</dd></div>
+                  <div><dt>Priority</dt><dd><StatusBadge>{selectedBug.priority}</StatusBadge></dd></div>
+                  <div><dt>Status</dt><dd><StatusBadge>{selectedBug.status}</StatusBadge></dd></div>
+                  <div>
+                    <dt>Resolution</dt>
+                    <dd>{isUnresolvedBug(selectedBug) ? "Not fixed yet" : "Resolved"}</dd>
+                  </div>
+                </dl>
+              </div>
+            )}
+          </Modal>
+        </>
+      );
       break;
     case "performance":
       content = <PerformancePanel />;

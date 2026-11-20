@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import logo from "@/assets/logo1.png";
 import { getCurrentUser, hasRoleAccess, logoutUser, normalizeRole,} from "@/shared/utils/auth";
+import { hasUnresolvedBugs } from "@/shared/data/bugs";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const role = normalizeRole(getCurrentUser()?.role);
@@ -54,6 +55,9 @@ const Sidebar = ({ isOpen, onClose }) => {
         {links.filter(([path]) => hasRoleAccess(role, path)).map(([path, icon, label]) => (
           <NavLink key={path} to={path} className={({ isActive }) => (isActive ? "active" : "")}>
             <span><i className={`fa-solid ${icon}`}></i></span> {role === "Employee" && path === "/Payroll" ? "Payslips" : role === "Finance" && path === "/Payroll" ? "Salary & Payroll" : label}
+            {path === "/bug-tracking" && hasUnresolvedBugs && (
+              <i className="sidebar-alert-dot" role="img" aria-label="Unfixed bugs" title="Unfixed bugs" />
+            )}
           </NavLink>
         ))}
       </nav>
